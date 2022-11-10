@@ -49,7 +49,12 @@ class Borda(VotingScheme):
     """
 
     def tally_personal_votes(self, preferences):
-        pass
+
+        m = len(preferences)
+        i = 1
+        for key in preferences:
+            preferences[key] = m - i
+            i += 1
 
 
 class Plurality(VotingScheme):
@@ -63,3 +68,15 @@ class Plurality(VotingScheme):
 
         first_preference = next(iter(preferences))
         preferences[first_preference] += 1
+
+
+class AntiPlurality(VotingScheme):
+    """
+    Anti-plurality voting class
+
+    The agent's lowest preference gets a score of 1
+    """
+    def tally_personal_votes(self, preferences):
+
+        last_preference = list(preferences.keys()[-1])
+        preferences[last_preference] += 1
