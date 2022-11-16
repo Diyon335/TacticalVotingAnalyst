@@ -24,6 +24,8 @@ class Agent:
 
         self.preferences = {}
 
+        self.tactical_preferences = {}
+
         for preference in preference_string:
             self.preferences[preference] = 0
 
@@ -39,6 +41,28 @@ class Agent:
         """
         return self.name
 
+    def vote_tactical(self, winner, voting_scheme):
+        """
+        Depending on the voting scheme, the agent can vote tactically and change its tactical preference dictionary
+
+        If an agent's first choice is the winner, they won't change their voting strategy
+
+        :param winner: A string with one character indicating the winner of the election
+        :param voting_scheme: A voting scheme object
+        :return: void
+        """
+        first_pref = next(iter(self.preferences))
+
+        if winner != first_pref:
+            voting_scheme().tactical_options(winner, self.preferences, self.tactical_preferences)
+
+    def get_tactical_preferences(self):
+        """
+        Gets the newly tallied tactical preferences of the agent
+        :return: A dictionary with the newly tallied preferences of the agent
+        """
+        return self.tactical_preferences
+
     def get_preferences(self):
         """
         Gets the tallied preferences of the agent
@@ -47,58 +71,14 @@ class Agent:
         """
         return self.preferences
 
-    def get_happiness(self, candidate_results):
-        # TODO complete function description
+    def get_happiness(self, winner):
         """
         Computes happiness of an agent in several different ways, namely:
-        -
-        -
-        :param candidate_results: A dictionary of candidates after voting results have been cast
+        :param: winner: A string of one character indicating the winner of the election
         :return: Returns a tuple of integers, representing the agent's happiness in different ways
         """
 
-        sorted_results = dict(sorted(candidate_results.items(), key=lambda k: k[1], reverse=True))
+        pref_list = list(self.preferences.keys())
+        index = pref_list.index(winner)
 
-        pass
-
-    # TODO implement this stuff in here. Maybe return a tuple containing the different ways of happiness values
-    # TODO for example: return (happiness_avg_percentage, happiness_sum_squares)
-    # def happiness_calculator(winner, preferences, strategy):
-    #
-    #     if strategy == "sum_squares":
-    #
-    #         individual_happiness = {}
-    #
-    #         for voter in preferences[0]:
-    #             i = 1
-    #             while True:
-    #                 if preferences[i][voter - 1] == winner:
-    #                     individual_happiness[voter] = np.square(len(preferences[1:]) - i)
-    #                     break
-    #                 i += 1
-    #
-    #         print(individual_happiness)
-    #         total_happiness = sum(individual_happiness[key] for key in individual_happiness)
-    #         print(total_happiness)
-    #
-    #         return individual_happiness, total_happiness
-    #
-    #     elif strategy == "avg_percentage":
-    #
-    #         individual_happiness = {}
-    #
-    #         for voter in preferences[0]:
-    #             i = 1
-    #             while True:
-    #                 if preferences[i][voter - 1] == winner:
-    #                     individual_happiness[voter] = (len(preferences[1:]) - i)/(len(preferences[1:]) - 1)
-    #                     break
-    #                 i += 1
-    #
-    #         print(individual_happiness)
-    #         avg_happiness = sum(individual_happiness[key] for key in individual_happiness)/len(individual_happiness)
-    #         print(avg_happiness)
-    #
-    #         return individual_happiness, avg_happiness
-    #
-
+        return ((len(pref_list) - index - 1)/(len(pref_list) - 1)) * 100

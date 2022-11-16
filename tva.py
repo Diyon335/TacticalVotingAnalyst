@@ -70,13 +70,21 @@ class TVA:
             if self.results[candidate] > max_votes:
                 winner = candidate
                 max_votes = self.results[candidate]
+
             elif self.results[candidate] < max_votes:
                 continue
+
             else:
                 if candidate < winner:
                     winner = candidate
 
         return winner
+
+    def get_agents(self):
+        """
+        :return: Returns a list of agent objects in the election
+        """
+        return self.agents
 
     def create_agents(self, num_agents):
         """
@@ -161,7 +169,14 @@ class TVA:
 
         string += f"Here are all the results\n"
         string += str(self.results)+"\n"
-        string += f"The winner of this election is: {self.get_winner()}\n\n"
+        string += f"The winner of this election is: {self.get_winner()}\n"
+
+        string += "The happiness of all agents are:\n"
+
+        for agent in self.agents:
+            string += f"{agent.name} : {agent.get_happiness(self.get_winner())} %\n"
+
+        string += "\n"
 
         string += "############################"
 
@@ -170,11 +185,28 @@ class TVA:
 
 if __name__ == "__main__":
 
-    candidates = "ABCD"
+    candidates = "ABCDEFGHI"
     voting = "Plurality"
-    voters = 2
+    voters = 10
+    happiness_threshold = 80
 
     election = TVA(candidates, voting, voters)
     election.run()
 
     print(election.get_report())
+    print("\n")
+
+    # Check how agents would change their votes depending on happiness
+
+    for agent in election.get_agents():
+
+        if agent.get_happiness(election.get_winner()) > happiness_threshold:
+            print(str(agent) + " was happy and didn't change their preferences")
+
+        else:
+            dictionary = election.scheme().tactical_options(agent, election)
+
+            print(f"For {str(agent)}, the tactical options are: \n")
+
+            for key in dictionary:
+                print(f"Option {key}: new preferences: {dictionary[key][0]} , new winner: {dictionary[key][1]}, new happiness: {dictionary[key][2]}")
