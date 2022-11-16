@@ -1,32 +1,6 @@
 from abc import ABC, abstractmethod
+from copy import copy
 
-
-def get_new_winner(new_results):
-    """
-    Returns the winning candidate, after a tactical voting strategy has been applied.
-    In the case of a tie, the winner will be chosen alphabetically (i.e., the agent
-    whose name begins with the lowest letter in the alphabet)
-
-    :param: A dictionary with the tallied vote indicating the results of the election
-    :return: A string with one character indicating the winner
-    """
-
-    winner = ""
-    max_votes = 0
-
-    for candidate in new_results:
-        if new_results[candidate] > max_votes:
-            winner = candidate
-            max_votes = new_results[candidate]
-
-        elif new_results[candidate] < max_votes:
-            continue
-
-        else:
-            if candidate < winner:
-                winner = candidate
-
-    return winner
 
 class VotingScheme(ABC):
     """
@@ -66,11 +40,20 @@ class VotingScheme(ABC):
     @abstractmethod
     def tactical_options(self, agent, tva_object):
         """
-        Abstract function to change an agent's order of votes, depending on the winner
+        Abstract function to change an agent's order of votes, depending on the winner. For each voting strategy, the
+        agent is able to tactically change their votes to increase happiness. This function returns a dictionary
+        containing all tactical options for a given voting strategy.
+
+        The dictionary follows the structure:
+        # TODO TO BE DECIDED. FOR NOW IT'S:
+        # TODO <key> : <value>, where key = option number, and value is a list with three indices
+        # TODO index 1 = new voting preference list
+        # TODO index 2 = new winner because of this agent's new preference list
+        # TODO index 3 = new happiness after subsequent re-election
 
         :param tva_object: A TVA object
         :param agent: The agent object for which tactical voting must be applied
-        :return: void
+        :return: Returns a dictionary of several tactical voting strategies the agent can apply
         """
         pass
 
@@ -115,12 +98,6 @@ class Plurality(VotingScheme):
         tactical_set = {}
 
         total_agents = len(tva_object.get_agents())
-        all_agents = []
-
-        for i in tva_object.get_agents():
-
-            if i != agent:
-                all_agents.append(i)
 
         winner = tva_object.get_winner()
 
@@ -133,7 +110,7 @@ class Plurality(VotingScheme):
 
             for i in range(1, stop_index):
 
-                new_list = original_list
+                new_list = copy(original_list)
                 temp = new_list[i]
                 new_list[i] = new_list[0]
                 new_list[0] = temp
@@ -145,7 +122,7 @@ class Plurality(VotingScheme):
                 # We add one vote to the candidate that we switch
                 results_copy[original_list[i]] += 1
 
-                new_winner = get_new_winner(results_copy)
+                new_winner = tva_object.get_winner(results=results_copy)
 
                 if new_winner != winner:
                     # TODO ASK GERARD ABOUT NEW_WINNER (VALUE OR WHOLE?)
