@@ -31,6 +31,14 @@ class Agent:
 
         self.happiness = 0
 
+    def __str__(self):
+        """
+        String representation of an agent will be their name
+
+        :return: Returns a string indicating the name of the agent
+        """
+        return self.name
+
     def get_preferences(self):
         """
         Gets the tallied preferences of the agent
