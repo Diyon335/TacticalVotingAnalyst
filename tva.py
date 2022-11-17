@@ -55,7 +55,7 @@ class TVA:
         """
         self.results = self.scheme().run_scheme(self.candidates, self.agents)
 
-    def get_winner(self):
+    def get_winner(self, results=None):
         """
         Returns the winning candidate. In the case of a tie, the winner will be chosen alphabetically (i.e., the agent
         whose name begins with the lowest letter in the alphabet)
@@ -66,17 +66,28 @@ class TVA:
         winner = ""
         max_votes = 0
 
-        for candidate in self.results:
-            if self.results[candidate] > max_votes:
+        if results is None:
+            results = self.results
+
+        for candidate in results:
+            if results[candidate] > max_votes:
                 winner = candidate
-                max_votes = self.results[candidate]
-            elif self.results[candidate] < max_votes:
+                max_votes = results[candidate]
+
+            elif results[candidate] < max_votes:
                 continue
+
             else:
                 if candidate < winner:
                     winner = candidate
 
         return winner
+
+    def get_agents(self):
+        """
+        :return: Returns a list of agent objects in the election
+        """
+        return self.agents
 
     def create_agents(self, num_agents):
         """
@@ -88,8 +99,7 @@ class TVA:
         agents = []
 
         for i in range(num_agents):
-            agents.append(Agent(f"Agent{i + 1}", self.generate_preferences(),
-                                self.scheme, self.candidates))
+            agents.append(Agent(f"Agent{i + 1}", self.generate_preferences(), self.scheme))
 
         return agents
 
@@ -151,8 +161,8 @@ class TVA:
         string += f"Voting scheme: {self.voting_scheme}\n"
 
         agent_string = ""
-        for agent in self.agents:
-            agent_string += str(agent)+" "
+        for a in self.agents:
+            agent_string += str(a)+" "
 
         string += f"The voters: {agent_string}\n"
 
@@ -161,7 +171,14 @@ class TVA:
 
         string += f"Here are all the results\n"
         string += str(self.results)+"\n"
-        string += f"The winner of this election is: {self.get_winner()}\n\n"
+        string += f"The winner of this election is: {self.get_winner()}\n"
+
+        string += "The happiness of all agents are:\n"
+
+        for a in self.agents:
+            string += f"{a.name} : {a.get_happiness(self.get_winner())} %\n"
+
+        string += "\n"
 
         string += "############################"
 
@@ -170,11 +187,38 @@ class TVA:
 
 if __name__ == "__main__":
 
-    candidates = "ABCD"
+    candidates = "ABCDEFGHI"
     voting = "Plurality"
-    voters = 2
+    voters = 10
+    happiness_threshold = 80
 
     election = TVA(candidates, voting, voters)
     election.run()
 
     print(election.get_report())
+    print("\n")
+
+    print("##### TACTICAL VOTING #####")
+
+    # Check how agents would change their votes depending on happiness
+    for agent in election.get_agents():
+
+        print(str(agent))
+        print(f"Initial happiness: {agent.get_happiness(election.get_winner())}")
+
+        if agent.get_happiness(election.get_winner()) > happiness_threshold:
+            print(str(agent) + " was happy and didn't change their preferences\n")
+
+        else:
+            dictionary = election.scheme().tactical_options(agent, election)
+
+            if len(dictionary) < 1:
+                print(f"{str(agent)} was unhappy, but did not have any tactical voting strategy\n")
+                continue
+
+            print(f"For {str(agent)}, the tactical options are:")
+
+            for key in dictionary:
+                print(f"Option {key}: new preferences: {dictionary[key][0]} , new winner: {dictionary[key][1]}, "
+                      f"new happiness: {dictionary[key][2]}")
+            print("\n")
