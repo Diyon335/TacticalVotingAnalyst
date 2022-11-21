@@ -136,12 +136,17 @@ class AntiPlurality(VotingScheme):
     """
     Anti-plurality voting class
 
-    The agent's lowest preference gets a score of 1
+    The agent's lowest preference gets a score of 0, while others get 1
     """
     def tally_personal_votes(self, preferences):
 
-        last_preference = list(preferences.keys()[-1])
-        preferences[last_preference] += 1
+        i = 0
+        for key in preferences:
+
+            if i < len(preferences) - 1:
+                preferences[key] += 1
+
+            i += 1
 
     def tactical_options(self, agent, tva_object):
         pass
