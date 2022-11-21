@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from copy import copy
+from agents.agent import get_winner
 
 
 class VotingScheme(ABC):
@@ -15,7 +16,7 @@ class VotingScheme(ABC):
         :param agents: A list of agents who are voting
         :return: Returns a dictionary of the tallied votes for each candidate
         """
-        candidate_dict = candidates
+        candidate_dict = copy(candidates)
 
         for agent in agents:
 
@@ -99,7 +100,7 @@ class Plurality(VotingScheme):
 
         total_agents = len(tva_object.get_agents())
 
-        winner = tva_object.get_winner()
+        winner = get_winner(tva_object.results)
 
         # If more than half agents voted for the winning candidate, there is no tactical voting strategy for the
         # current agent
@@ -115,19 +116,19 @@ class Plurality(VotingScheme):
                 new_list[i] = new_list[0]
                 new_list[0] = temp
 
-                results_copy = tva_object.results
+                results_copy = copy(tva_object.results)
                 # Our original vote is taken away from the results
                 results_copy[original_list[0]] -= 1
 
                 # We add one vote to the candidate that we switch
                 results_copy[original_list[i]] += 1
 
-                new_winner = tva_object.get_winner(results=results_copy)
+                new_winner = get_winner(results_copy)
 
                 if new_winner != winner:
                     # TODO ASK GERARD ABOUT NEW_WINNER (VALUE OR WHOLE?)
                     # TODO IMPLEMENT OVERALL HAPPINESS
-                    tactical_set[i] = [new_list, new_winner, agent.get_happiness(new_winner)]
+                    tactical_set[i] = [new_list, new_winner, agent.get_happiness(tva_object.results)]
 
         return tactical_set
 

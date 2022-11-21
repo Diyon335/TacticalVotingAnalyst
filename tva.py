@@ -9,7 +9,7 @@ import importlib
 import random
 import numpy as np
 
-from agents.agent import Agent
+from agents.agent import Agent, get_winner
 
 
 class TVA:
@@ -54,34 +54,6 @@ class TVA:
         :return: void
         """
         self.results = self.scheme().run_scheme(self.candidates, self.agents)
-
-    def get_winner(self, results=None):
-        """
-        Returns the winning candidate. In the case of a tie, the winner will be chosen alphabetically (i.e., the agent
-        whose name begins with the lowest letter in the alphabet)
-
-        :return: A string with one character indicating the winner
-        """
-
-        winner = ""
-        max_votes = 0
-
-        if results is None:
-            results = self.results
-
-        for candidate in results:
-            if results[candidate] > max_votes:
-                winner = candidate
-                max_votes = results[candidate]
-
-            elif results[candidate] < max_votes:
-                continue
-
-            else:
-                if candidate < winner:
-                    winner = candidate
-
-        return winner
 
     def get_agents(self):
         """
@@ -171,12 +143,12 @@ class TVA:
 
         string += f"Here are all the results\n"
         string += str(self.results)+"\n"
-        string += f"The winner of this election is: {self.get_winner()}\n"
+        string += f"The winner of this election is: {get_winner(self.results)}\n"
 
         string += "The happiness of all agents are:\n"
 
         for a in self.agents:
-            string += f"{a.name} : {a.get_happiness(self.get_winner())} %\n"
+            string += f"{a.name} : {a.get_happiness(self.results)} %\n"
 
         string += "\n"
 
@@ -204,9 +176,11 @@ if __name__ == "__main__":
     for agent in election.get_agents():
 
         print(str(agent))
-        print(f"Initial happiness: {agent.get_happiness(election.get_winner())}")
+        print(f"Initial happiness: {agent.get_happiness(election.results)}")
 
-        if agent.get_happiness(election.get_winner()) > happiness_threshold:
+        d = agent.get_happiness(election.results)
+        print(d)
+        if d["percentage_social_index"] > happiness_threshold:
             print(str(agent) + " was happy and didn't change their preferences\n")
 
         else:

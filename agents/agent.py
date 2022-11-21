@@ -1,3 +1,33 @@
+import operator
+
+
+def get_winner(results):
+    """
+    Returns the winning candidate. In the case of a tie, the winner will be chosen alphabetically (i.e., the agent
+    whose name begins with the lowest letter in the alphabet)
+
+    :param: results: A dictionary of results
+    :return: A string with one character indicating the winner
+    """
+
+    winner = ""
+    max_votes = 0
+
+    for candidate in results:
+        if results[candidate] > max_votes:
+            winner = candidate
+            max_votes = results[candidate]
+
+        elif results[candidate] < max_votes:
+            continue
+
+        else:
+            if candidate < winner:
+                winner = candidate
+
+    return winner
+
+
 class Agent:
     """
     Class for an agent
@@ -37,15 +67,33 @@ class Agent:
         """
         return self.preferences
 
-    def get_happiness(self, winner):
+    def get_happiness(self, result_dict):
         """
         Computes happiness of an agent
-        :param: winner: A string of one character indicating the winner of the election
-        # TODO TO BE DONE, RIGHT NOW RETURNS 1 WAY
-        :return: Returns a tuple of integers, representing the agent's happiness in different ways
+
+        :param: result_dict: A dictionary of results
+        :return: Returns a dictionary of happiness values, representing the agent's happiness in different ways
         """
+        happiness_dict = {}
 
+        """
+        What is the index of the winner in my preference list
+        """
         pref_list = list(self.preferences.keys())
-        index = pref_list.index(winner)
+        index = pref_list.index(get_winner(result_dict))
 
-        return ((len(pref_list) - index - 1)/(len(pref_list) - 1)) * 100
+        happiness_dict["percentage_my_preference"] = ((len(pref_list) - index - 1)/(len(pref_list) - 1)) * 100
+
+        """
+        What is the index of my first preference in the results
+        """
+        result_d = sorted(result_dict.items(), key=operator.itemgetter(1), reverse=True)
+        result_list = [x[0] for x in result_d]
+
+        index = result_list.index(pref_list[0])
+
+        happiness_dict["percentage_social_index"] = ((len(result_list) - index - 1)/(len(result_list) - 1)) * 100
+
+        return happiness_dict
+
+
