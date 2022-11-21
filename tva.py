@@ -193,6 +193,8 @@ if __name__ == "__main__":
             print(f"For {str(agent)}, the tactical options are:")
 
             for key in dictionary:
-                print(f"Option {key}: new preferences: {dictionary[key][0]} , new winner: {dictionary[key][1]}, "
-                      f"new happiness: {dictionary[key][2]}")
+                for option in dictionary[key]:
+                    print(f"Type of happiness {key}: Option:{option} new preferences: {dictionary[key][option][0]} ,"
+                          f" new winner: {dictionary[key][option][1]}, "
+                            f"new happiness: {dictionary[key][option][2][key]}")
             print("\n")

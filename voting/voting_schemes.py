@@ -96,7 +96,7 @@ class Plurality(VotingScheme):
 
     def tactical_options(self, agent, tva_object):
 
-        tactical_set = {}
+        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
 
         total_agents = len(tva_object.get_agents())
 
@@ -128,7 +128,7 @@ class Plurality(VotingScheme):
                 if new_winner != winner:
                     # TODO ASK GERARD ABOUT NEW_WINNER (VALUE OR WHOLE?)
                     # TODO IMPLEMENT OVERALL HAPPINESS
-                    tactical_set[i] = [new_list, new_winner, agent.get_happiness(tva_object.results)]
+                    tactical_set["percentage_my_preference"][i] = [new_list, new_winner, agent.get_happiness(results_copy)]
 
         return tactical_set
 
