@@ -178,14 +178,28 @@ class TVA:
         return string
 
 
+def create_and_run_election(n_voters, n_candidates, voting_scheme):
+
+    candidates = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    candidates = candidates[:n_candidates]
+
+    election = TVA(candidates, voting_scheme, n_voters)
+    election.run()
+    election.get_report()   # not the best way do to this, but we need to run this function to properly
+                            # update self.happinesses for overall happiness calculation, unless we just change
+                            # this and somehow transfer overall happiness calculation into election.run()
+
+    return election.get_overall_happiness(election.happinesses)
+
+
 if __name__ == "__main__":
 
     candidates = "ABCDE"
-    voting = "Plurality"
+    voting_scheme = "Plurality"
     voters = 5
     happiness_threshold = 99
 
-    election = TVA(candidates, voting, voters)
+    election = TVA(candidates, voting_scheme, voters)
     election.run()
 
     print(election.get_report())
@@ -210,6 +224,14 @@ if __name__ == "__main__":
                 print(f"{str(agent)} was unhappy, but did not have any tactical voting strategy\n")
                 continue
 
+            '''
+            TO DO fix the following: since now the dictionaries holding tactical options always have two keys (one per
+            happiness computation strategy), the program never enters the if statement above and therefore never hits
+            "continue"; fixing this would allow for tactical voting risk computation, since I cannot really think
+            of a clever way to do it that is not just setting a variable "agents_with_tactical_options = 0" and
+            just increasing it by 1 every time the continue statement above is not triggered
+            '''
+
             print(f"For {str(agent)}, the tactical options are:")
 
             for key in dictionary:
@@ -220,3 +242,20 @@ if __name__ == "__main__":
                           f"new happiness: {dictionary[key][option][3][key]}, "
                           f"new overall happiness: {dictionary[key][option][4][key]}")
             print("\n")
+
+    '''tests = 1000
+    total_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    n_voters = 25
+    n_candidates = 8
+    voting_scheme = "Plurality"
+
+    for i in range(tests):
+
+        new_overall_happiness = create_and_run_election(n_voters, n_candidates, voting_scheme)
+        for key in new_overall_happiness:
+            total_overall_happiness[key] += new_overall_happiness[key]
+
+    average_overall_happiness = {}
+    for key in total_overall_happiness:
+        average_overall_happiness[key] = total_overall_happiness[key]/tests
+    print(average_overall_happiness)'''
