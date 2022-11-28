@@ -165,7 +165,27 @@ class AntiPlurality(VotingScheme):
         For percentage_my_preference
         """
 
-        #Olmo's stuff
+        winner = get_winner(tva_object.results)
+        original_list = list(agent.preferences)
+        winner_index = original_list.index(winner)
+
+        # if the winner is not already in the last position I can investigate if I have a
+        # tactical voting option
+        if original_list[-1] != winner:
+
+            new_list = copy(original_list)
+            temp = new_list[-1]
+            new_list[-1] = winner
+            new_list[winner_index] = temp
+
+            results_copy = copy(tva_object.results)
+            results_copy[original_list[-1]] += 1
+            results_copy[original_list[winner_index]] -= 1
+
+            new_winner = get_winner(results_copy)
+
+            if new_winner != winner:
+                tactical_set["percentage_my_preference"][0] = [new_list, new_winner, agent.get_happiness(results_copy)]
 
         """
         For percentage_social_index
@@ -255,11 +275,58 @@ class VotingForTwo(VotingScheme):
         preferences[preference] += 1
 
     def tactical_options(self, agent, tva_object):
+
+        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
+
         """
         For percentage_my_preference
         """
 
-        # Olmo's stuff
+        winner = get_winner(tva_object.results)
+        original_list = list(agent.preferences)
+        winner_index = original_list.index(winner)
+
+        # if the winner is not in the third position of my preference order I can investigate
+        # if I have tactical voting options
+        if winner_index != 2:
+
+            if winner_index == 1:
+
+                for i in range(2, len(original_list)):
+
+                    new_list = copy(original_list)
+                    temp = new_list[i]
+                    new_list[i] = winner
+                    new_list[1] = temp
+
+                    results_copy = copy(tva_object.results)
+                    results_copy[original_list[1]] -= 1
+                    results_copy[original_list[i]] += 1
+
+                    new_winner = get_winner(results_copy)
+
+                    if new_winner == original_list[0]:
+                        tactical_set["percentage_my_preference"][i - 2] = [new_list, new_winner,
+                                                                           agent.get_happiness(results_copy)]
+
+            else:
+
+                for i in range(2, winner_index):
+
+                    new_list = copy(original_list)
+                    temp = new_list[i]
+                    new_list[i] = new_list[1]
+                    new_list[1] = temp
+
+                    results_copy = copy(tva_object.results)
+                    results_copy[original_list[i]] += 1
+                    results_copy[original_list[1]] -= 1
+
+                    new_winner = get_winner(results_copy)
+
+                    if original_list.index(new_winner) < winner_index:
+                        tactical_set["percentage_my_preference"][i - 2] = [new_list, new_winner,
+                                                                           agent.get_happiness(results_copy)]
 
         """
         For percentage_social_index
