@@ -123,12 +123,12 @@ class TVA:
 
         return np_matrix.transpose()
 
-    def get_overall_happiness(self):
+    def get_overall_happiness(self, happinesses):
 
         overall_happiness = {}
 
-        for happiness_computation in self.happinesses:
-            overall_happiness[happiness_computation] = sum(self.happinesses[happiness_computation])/len(self.happinesses[happiness_computation])
+        for happiness_computation in happinesses:
+            overall_happiness[happiness_computation] = sum(happinesses[happiness_computation])/len(happinesses[happiness_computation])
 
         return overall_happiness
 
@@ -167,7 +167,7 @@ class TVA:
                     self.happinesses[happiness_computation] = []
                 self.happinesses[happiness_computation].append(happiness[happiness_computation])
 
-        overall_happiness = self.get_overall_happiness()
+        overall_happiness = self.get_overall_happiness(self.happinesses)
 
         string += f"The overall happiness is: {overall_happiness}"
 
@@ -180,10 +180,10 @@ class TVA:
 
 if __name__ == "__main__":
 
-    candidates = "ABCDEFGHI"
-    voting = "AntiPlurality"
-    voters = 10
-    happiness_threshold = 80
+    candidates = "ABCDE"
+    voting = "Plurality"
+    voters = 5
+    happiness_threshold = 99
 
     election = TVA(candidates, voting, voters)
     election.run()
@@ -214,7 +214,9 @@ if __name__ == "__main__":
 
             for key in dictionary:
                 for option in dictionary[key]:
-                    print(f"Type of happiness {key}: Option:{option} new preferences: {dictionary[key][option][0]} ,"
-                          f" new winner: {dictionary[key][option][1]}, "
-                            f"new happiness: {dictionary[key][option][2][key]}")
+                    print(f"Type of happiness {key}: Option:{option} new preferences: {dictionary[key][option][0]} , "
+                          f"new winner: {dictionary[key][option][1]}, "
+                          f"new voting outcome: {dictionary[key][option][2]}, "
+                          f"new happiness: {dictionary[key][option][3][key]}, "
+                          f"new overall happiness: {dictionary[key][option][4][key]}")
             print("\n")

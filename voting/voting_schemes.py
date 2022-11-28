@@ -2,6 +2,29 @@ from abc import ABC, abstractmethod
 from copy import copy, deepcopy
 from agents.agent import get_winner
 
+'''
+TO DO: move this anywhere else where it makes sense, for now it's here just for convenience sake
+'''
+
+
+def get_tactical_overall_happiness(tva_object, agent, agent_happiness, results_copy):
+
+    happinesses = {}
+
+    for other_agent in tva_object.get_agents():
+        if other_agent != agent:
+            other_happiness = other_agent.get_happiness(results_copy)
+            for key in other_happiness:
+                if key not in happinesses:
+                    happinesses[key] = []
+                happinesses[key].append(other_happiness[key])
+        else:
+            for key in agent_happiness:
+                if key not in happinesses:
+                    happinesses[key] = []
+                happinesses[key].append(agent_happiness[key])
+
+    return happinesses
 
 class VotingScheme(ABC):
     """
@@ -115,10 +138,10 @@ class Plurality(VotingScheme):
 
             for i in range(1, stop_index):
 
-                new_list = copy(original_list)
-                temp = new_list[i]
-                new_list[i] = new_list[0]
-                new_list[0] = temp
+                new_pref_list = copy(original_list)
+                temp = new_pref_list[i]
+                new_pref_list[i] = new_pref_list[0]
+                new_pref_list[0] = temp
 
                 results_copy = copy(tva_object.results)
                 # Our original vote is taken away from the results
@@ -130,7 +153,14 @@ class Plurality(VotingScheme):
                 new_winner = get_winner(results_copy)
 
                 if new_winner != winner:
-                    tactical_set["percentage_my_preference"][i] = [new_list, new_winner, agent.get_happiness(results_copy)]
+
+                    agent_happiness = agent.get_happiness(results_copy)
+                    new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                           agent_happiness, results_copy)
+
+                    tactical_set["percentage_my_preference"][i] = [new_pref_list, new_winner,
+                                                                   results_copy, agent_happiness,
+                                                                   new_overall_happiness]
 
         """
         For percentage_social_index
@@ -173,10 +203,10 @@ class AntiPlurality(VotingScheme):
         # tactical voting option
         if original_list[-1] != winner:
 
-            new_list = copy(original_list)
-            temp = new_list[-1]
-            new_list[-1] = winner
-            new_list[winner_index] = temp
+            new_pref_list = copy(original_list)
+            temp = new_pref_list[-1]
+            new_pref_list[-1] = winner
+            new_pref_list[winner_index] = temp
 
             results_copy = copy(tva_object.results)
             results_copy[original_list[-1]] += 1
@@ -185,7 +215,14 @@ class AntiPlurality(VotingScheme):
             new_winner = get_winner(results_copy)
 
             if new_winner != winner:
-                tactical_set["percentage_my_preference"][0] = [new_list, new_winner, agent.get_happiness(results_copy)]
+
+                agent_happiness = agent.get_happiness(results_copy)
+                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                       agent_happiness, results_copy)
+
+                tactical_set["percentage_my_preference"][0] = [new_pref_list, new_winner,
+                                                               results_copy, agent_happiness,
+                                                               new_overall_happiness]
 
         """
         For percentage_social_index
@@ -231,6 +268,9 @@ class AntiPlurality(VotingScheme):
                 list_copy[pref_list.index(temp_i)] = temp_last
                 list_copy[-1] = temp_i
 
+                '''
+                ### TO DO: can we remove deepcopy from here? because deepcopy is super slow
+                '''
                 agent_copy = deepcopy(agent)
 
                 new_prefs = {}
@@ -294,10 +334,10 @@ class VotingForTwo(VotingScheme):
 
                 for i in range(2, len(original_list)):
 
-                    new_list = copy(original_list)
-                    temp = new_list[i]
-                    new_list[i] = winner
-                    new_list[1] = temp
+                    new_pref_list = copy(original_list)
+                    temp = new_pref_list[i]
+                    new_pref_list[i] = winner
+                    new_pref_list[1] = temp
 
                     results_copy = copy(tva_object.results)
                     results_copy[original_list[1]] -= 1
@@ -306,17 +346,23 @@ class VotingForTwo(VotingScheme):
                     new_winner = get_winner(results_copy)
 
                     if new_winner == original_list[0]:
-                        tactical_set["percentage_my_preference"][i - 2] = [new_list, new_winner,
-                                                                           agent.get_happiness(results_copy)]
+
+                        agent_happiness = agent.get_happiness(results_copy)
+                        new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                               agent_happiness, results_copy)
+
+                        tactical_set["percentage_my_preference"][i - 2] = [new_pref_list, new_winner,
+                                                                           results_copy, agent_happiness,
+                                                                           new_overall_happiness]
 
             else:
 
                 for i in range(2, winner_index):
 
-                    new_list = copy(original_list)
-                    temp = new_list[i]
-                    new_list[i] = new_list[1]
-                    new_list[1] = temp
+                    new_pref_list = copy(original_list)
+                    temp = new_pref_list[i]
+                    new_pref_list[i] = new_pref_list[1]
+                    new_pref_list[1] = temp
 
                     results_copy = copy(tva_object.results)
                     results_copy[original_list[i]] += 1
@@ -325,8 +371,14 @@ class VotingForTwo(VotingScheme):
                     new_winner = get_winner(results_copy)
 
                     if original_list.index(new_winner) < winner_index:
-                        tactical_set["percentage_my_preference"][i - 2] = [new_list, new_winner,
-                                                                           agent.get_happiness(results_copy)]
+
+                        agent_happiness = agent.get_happiness(results_copy)
+                        new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                               agent_happiness, results_copy)
+
+                        tactical_set["percentage_my_preference"][i - 2] = [new_pref_list, new_winner,
+                                                                           results_copy, agent_happiness,
+                                                                           new_overall_happiness]
 
         """
         For percentage_social_index
