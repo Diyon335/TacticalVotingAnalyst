@@ -47,6 +47,8 @@ class TVA:
 
         self.results = {}
 
+        self.happinesses = {}
+
     def run(self):
         """
         A void function to run the selected voting scheme
@@ -121,6 +123,15 @@ class TVA:
 
         return np_matrix.transpose()
 
+    def get_overall_happiness(self):
+
+        overall_happiness = {}
+
+        for happiness_computation in self.happinesses:
+            overall_happiness[happiness_computation] = sum(self.happinesses[happiness_computation])/len(self.happinesses[happiness_computation])
+
+        return overall_happiness
+
     def get_report(self):
         """
         Creates a report of the entire election, and highlights the most important information
@@ -148,7 +159,17 @@ class TVA:
         string += "The happiness of all agents are:\n"
 
         for a in self.agents:
-            string += f"{a.name} : {a.get_happiness(self.results)} %\n"
+            happiness = a.get_happiness(self.results)
+            string += f"{a.name} : {happiness} %\n"
+
+            for happiness_computation in happiness:
+                if happiness_computation not in self.happinesses:
+                    self.happinesses[happiness_computation] = []
+                self.happinesses[happiness_computation].append(happiness[happiness_computation])
+
+        overall_happiness = self.get_overall_happiness()
+
+        string += f"The overall happiness is: {overall_happiness}"
 
         string += "\n"
 
