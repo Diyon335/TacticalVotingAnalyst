@@ -181,7 +181,7 @@ class TVA:
 if __name__ == "__main__":
 
     candidates = "ABCDEFGHI"
-    voting = "Plurality"
+    voting = "AntiPlurality"
     voters = 10
     happiness_threshold = 80
 
@@ -200,7 +200,6 @@ if __name__ == "__main__":
         print(f"Initial happiness: {agent.get_happiness(election.results)}")
 
         d = agent.get_happiness(election.results)
-        print(d)
         if d["percentage_social_index"] > happiness_threshold:
             print(str(agent) + " was happy and didn't change their preferences\n")
 
