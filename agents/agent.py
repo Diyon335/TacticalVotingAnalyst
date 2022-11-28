@@ -24,6 +24,7 @@ def get_winner(results):
         else:
             if candidate < winner:
                 winner = candidate
+                max_votes = results[candidate]
 
     return winner
 
@@ -87,8 +88,7 @@ class Agent:
         """
         What is the index of my first preference in the results
         """
-        result_d = sorted(result_dict.items(), key=operator.itemgetter(1), reverse=True)
-        result_list = [x[0] for x in result_d]
+        result_list = sorted(result_dict, key=lambda k: result_dict[k], reverse=True)
 
         index = result_list.index(pref_list[0])
 

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from copy import copy
+from copy import copy, deepcopy
 from agents.agent import get_winner
 
 
@@ -98,6 +98,10 @@ class Plurality(VotingScheme):
 
         tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
 
+        """
+        For percentage_my_preference
+        """
+
         total_agents = len(tva_object.get_agents())
 
         winner = get_winner(tva_object.results)
@@ -126,9 +130,13 @@ class Plurality(VotingScheme):
                 new_winner = get_winner(results_copy)
 
                 if new_winner != winner:
-                    # TODO ASK GERARD ABOUT NEW_WINNER (VALUE OR WHOLE?)
-                    # TODO IMPLEMENT OVERALL HAPPINESS
                     tactical_set["percentage_my_preference"][i] = [new_list, new_winner, agent.get_happiness(results_copy)]
+
+        """
+        For percentage_social_index
+        """
+
+        # Not possible
 
         return tactical_set
 
@@ -150,7 +158,85 @@ class AntiPlurality(VotingScheme):
             i += 1
 
     def tactical_options(self, agent, tva_object):
-        pass
+
+        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
+
+        """
+        For percentage_my_preference
+        """
+
+        #Olmo's stuff
+
+        """
+        For percentage_social_index
+        """
+        pref_dict = copy(agent.get_preferences())
+        pref_list = list(pref_dict.keys())
+
+        least_preferred = pref_list[-1]
+
+        results_copy = copy(tva_object.results)
+        results_copy[least_preferred] += 1
+
+        original_happiness = agent.get_happiness(tva_object.results)
+
+        # print("initial")
+        # print(results_copy[least_preferred])
+        # print(pref_dict[pref_list[0]])
+        # print(results_copy)
+        # print(pref_dict)
+
+        if results_copy[least_preferred] > results_copy[pref_list[0]]:
+            # print("test")
+            tactical_set["percentage_social_index"] = {}
+
+        elif results_copy[least_preferred] == results_copy[pref_list[0]] and least_preferred < pref_list[0]:
+            # print("test2")
+            tactical_set["percentage_social_index"] = {}
+
+        else:
+
+            results_copy = copy(tva_object.results)
+            results_list = sorted(results_copy, key=lambda k: results_copy[k], reverse=True)
+
+            stop_index = results_list.index(pref_list[0])
+
+            for i in range(0, stop_index):
+
+                list_copy = copy(pref_list)
+
+                temp_i = results_list[i]
+                temp_last = pref_list[-1]
+
+                list_copy[pref_list.index(temp_i)] = temp_last
+                list_copy[-1] = temp_i
+
+                agent_copy = deepcopy(agent)
+
+                new_prefs = {}
+                for candidate in list_copy:
+                    new_prefs[candidate] = 0
+
+                self.tally_personal_votes(new_prefs)
+                agent_copy.preferences = new_prefs
+
+                new_agents = [agent_copy]
+
+                for a in tva_object.get_agents():
+                    if not a == agent:
+                        new_agents.append(a)
+
+                new_results = self.run_scheme(tva_object.candidates, new_agents)
+                new_winner = get_winner(new_results)
+
+                new_happiness = agent.get_happiness(new_results)
+
+                if new_happiness["percentage_social_index"] <= original_happiness["percentage_social_index"]:
+                    continue
+
+                tactical_set["percentage_social_index"][i] = [list_copy, new_winner, new_happiness]
+
+        return tactical_set
 
 
 class VotingForTwo(VotingScheme):
@@ -169,4 +255,13 @@ class VotingForTwo(VotingScheme):
         preferences[preference] += 1
 
     def tactical_options(self, agent, tva_object):
+        """
+        For percentage_my_preference
+        """
+
+        # Olmo's stuff
+
+        """
+        For percentage_social_index
+        """
         pass
