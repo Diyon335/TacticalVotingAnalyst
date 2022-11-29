@@ -199,6 +199,9 @@ if __name__ == "__main__":
     voters = 7
     happiness_threshold = 99
 
+    preference_happiness_count = 0
+    social_index_count = 0
+
     election = TVA(candidates, voting_scheme, voters)
     election.run()
 
@@ -236,6 +239,12 @@ if __name__ == "__main__":
                     print(f"{str(agent)} was unhappy ({key}), but did not have any tactical voting strategy\n")
                     continue
 
+                if key == "percentage_my_preference":
+                    preference_happiness_count += 1
+
+                if key == "percentage_social_index":
+                    social_index_count += 1
+
                 for option in dictionary[key]:
                     print(f"Type of happiness {key}: Option:{option} new preferences: {dictionary[key][option][0]} , "
                           f"new winner: {dictionary[key][option][1]}, "
@@ -243,6 +252,9 @@ if __name__ == "__main__":
                           f"new happiness: {dictionary[key][option][3][key]}, "
                           f"new overall happiness: {dictionary[key][option][4][key]}")
             print("\n")
+
+    print(f"Risk based on preference happiness: {preference_happiness_count/len(election.get_agents())}\n")
+    print(f"Risk based on social index happiness: {social_index_count/len(election.get_agents())}")
 
     '''tests = 1000
     total_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
