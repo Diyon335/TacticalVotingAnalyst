@@ -250,7 +250,7 @@ if __name__ == "__main__":
                           f"new winner: {dictionary[key][option][1]}, "
                           f"new voting outcome: {dictionary[key][option][2]}, "
                           f"new happiness: {dictionary[key][option][3][key]}, "
-                          f"new overall happiness: {dictionary[key][option][4][key]}")
+                          f"new overall {key} happiness: {dictionary[key][option][4][key]}")
             print("\n")
 
     print(f"Risk based on preference happiness: {preference_happiness_count/len(election.get_agents())}\n")

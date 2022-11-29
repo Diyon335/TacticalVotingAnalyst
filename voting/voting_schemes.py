@@ -24,7 +24,11 @@ def get_tactical_overall_happiness(tva_object, agent, agent_happiness, results_c
                     happinesses[key] = []
                 happinesses[key].append(agent_happiness[key])
 
+    for key in happinesses:
+        happinesses[key] = sum(happinesses[key])/len(happinesses[key])
+
     return happinesses
+
 
 class VotingScheme(ABC):
     """
