@@ -194,9 +194,9 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme):
 
 if __name__ == "__main__":
 
-    candidates = "ABCDE"
-    voting_scheme = "Plurality"
-    voters = 5
+    candidates = "ABCDEFGHI"
+    voting_scheme = "VotingForTwo"
+    voters = 7
     happiness_threshold = 99
 
     election = TVA(candidates, voting_scheme, voters)
@@ -220,10 +220,6 @@ if __name__ == "__main__":
         else:
             dictionary = election.scheme().tactical_options(agent, election)
 
-            if len(dictionary) < 1:
-                print(f"{str(agent)} was unhappy, but did not have any tactical voting strategy\n")
-                continue
-
             '''
             TO DO fix the following: since now the dictionaries holding tactical options always have two keys (one per
             happiness computation strategy), the program never enters the if statement above and therefore never hits
@@ -235,6 +231,11 @@ if __name__ == "__main__":
             print(f"For {str(agent)}, the tactical options are:")
 
             for key in dictionary:
+
+                if len(dictionary[key]) < 1:
+                    print(f"{str(agent)} was unhappy ({key}), but did not have any tactical voting strategy\n")
+                    continue
+
                 for option in dictionary[key]:
                     print(f"Type of happiness {key}: Option:{option} new preferences: {dictionary[key][option][0]} , "
                           f"new winner: {dictionary[key][option][1]}, "

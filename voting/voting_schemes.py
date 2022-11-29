@@ -237,18 +237,12 @@ class AntiPlurality(VotingScheme):
 
         original_happiness = agent.get_happiness(tva_object.results)
 
-        # print("initial")
-        # print(results_copy[least_preferred])
-        # print(pref_dict[pref_list[0]])
-        # print(results_copy)
-        # print(pref_dict)
-
         if results_copy[least_preferred] > results_copy[pref_list[0]]:
-            # print("test")
+
             tactical_set["percentage_social_index"] = {}
 
         elif results_copy[least_preferred] == results_copy[pref_list[0]] and least_preferred < pref_list[0]:
-            # print("test2")
+
             tactical_set["percentage_social_index"] = {}
 
         else:
@@ -271,7 +265,7 @@ class AntiPlurality(VotingScheme):
                 '''
                 ### TO DO: can we remove deepcopy from here? because deepcopy is super slow
                 '''
-                agent_copy = deepcopy(agent)
+                agent_copy = copy(agent)
 
                 new_prefs = {}
                 for candidate in list_copy:
@@ -383,4 +377,64 @@ class VotingForTwo(VotingScheme):
         """
         For percentage_social_index
         """
-        pass
+        pref_dict = copy(agent.get_preferences())
+        pref_list = list(pref_dict.keys())
+
+        first_pref = pref_list[0]
+        second_pref = pref_list[1]
+
+        original_happiness = agent.get_happiness(tva_object.results)
+
+        results_dict = copy(tva_object.results)
+
+        if not results_dict[second_pref] - results_dict[first_pref] >= 2 or \
+                (results_dict[second_pref] - results_dict[first_pref] == 1 and second_pref < first_pref):
+
+            for i in range(2, len(pref_list)):
+
+                results_dict_copy = copy(results_dict)
+
+                results_dict_copy[pref_list[i]] += 1
+
+                if results_dict_copy[pref_list[i]] > results_dict_copy[first_pref] and pref_list[i] < first_pref:
+                    results_dict_copy[pref_list[i]] -= 1
+                    continue
+
+                else:
+
+                    results_dict_copy[pref_list[i]] -= 1
+
+                    pref_list_copy = copy(pref_list)
+
+                    temp = pref_list_copy[i]
+                    pref_list_copy[i] = second_pref
+                    pref_list_copy[1] = temp
+
+                    new_pref_dict = {}
+                    for element in pref_list_copy:
+                        new_pref_dict[element] = 0
+
+                    self.tally_personal_votes(new_pref_dict)
+                    agent_copy = copy(agent)
+                    agent_copy.preferences = new_pref_dict
+
+                    new_agents = [agent_copy]
+
+                    for a in tva_object.get_agents():
+                        if not a == agent:
+                            new_agents.append(a)
+
+                    new_results = self.run_scheme(tva_object.candidates, new_agents)
+                    new_winner = get_winner(new_results)
+
+                    new_happiness = agent.get_happiness(new_results)
+
+                    if new_happiness["percentage_social_index"] <= original_happiness["percentage_social_index"]:
+                        continue
+
+                    new_overall_happiness = get_tactical_overall_happiness(tva_object, agent, new_happiness, new_results)
+
+                    tactical_set["percentage_social_index"][i] = [pref_list_copy, new_winner, new_results,
+                                                                  new_happiness, new_overall_happiness]
+
+        return tactical_set
