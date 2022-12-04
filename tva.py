@@ -8,6 +8,7 @@ The Tactical Voter Analyst (TVA) for the course: Multi-Agent Systems
 import importlib
 import random
 import numpy as np
+from copy import copy
 
 from agents.agent import Agent, get_winner
 
@@ -17,7 +18,7 @@ class TVA:
     Tactical Voting Analyst class
     """
 
-    def __init__(self, candidate_string, voting_scheme, num_agents):
+    def __init__(self, candidate_string, voting_scheme, num_agents, advanced_tva):
         """
         The constructor for the TVA
 
@@ -34,6 +35,7 @@ class TVA:
         self.candidates = self.create_candidates()
         self.num_agents = num_agents
         self.voting_scheme = voting_scheme
+        self.is_atva = advanced_tva
 
         module = importlib.import_module("voting.voting_schemes")
 
@@ -128,7 +130,8 @@ class TVA:
         overall_happiness = {}
 
         for happiness_computation in happinesses:
-            overall_happiness[happiness_computation] = sum(happinesses[happiness_computation])/len(happinesses[happiness_computation])
+            overall_happiness[happiness_computation] = sum(happinesses[happiness_computation]) / len(
+                happinesses[happiness_computation])
 
         return overall_happiness
 
@@ -140,20 +143,23 @@ class TVA:
 
         string = ""
 
+        preference_happiness_count = 0
+        social_index_count = 0
+
         string += "##### ELECTION RESULTS #####\n\n"
         string += f"Voting scheme: {self.voting_scheme}\n"
 
         agent_string = ""
         for a in self.agents:
-            agent_string += str(a)+" "
+            agent_string += str(a) + " "
 
         string += f"The voters: {agent_string}\n"
 
         string += f"The voters preferences are summarised below\n"
-        string += str(self.get_preference_matrix())+"\n"
+        string += str(self.get_preference_matrix()) + "\n"
 
         string += f"Here are all the results\n"
-        string += str(self.results)+"\n"
+        string += str(self.results) + "\n"
         string += f"The winner of this election is: {get_winner(self.results)}\n"
 
         string += "The happiness of all agents are:\n"
@@ -169,92 +175,126 @@ class TVA:
 
         overall_happiness = self.get_overall_happiness(self.happinesses)
 
-        string += f"The overall happiness is: {overall_happiness}"
+        string += f"The overall happiness is: {overall_happiness}\n\n"
 
-        string += "\n"
+        string += "##### TACTICAL VOTING #####\n\n"
 
-        string += "############################"
+        # Check how agents would change their votes depending on happiness
+        for a in self.agents:
+
+            happiness_dict = a.get_happiness(self.results)
+
+            string += f"For {str(a)} with initial happiness: {happiness_dict}\n"
+
+            if happiness_dict["percentage_social_index"] > happiness_threshold and \
+                    happiness_dict["percentage_my_preference"] > happiness_threshold:
+
+                string += f"{str(a)} was happy and didn't change their preferences\n\n"
+
+            else:
+                tact_dictionary = self.scheme().tactical_options(a, election)
+
+                string += f"For {str(a)}, the tactical options are:\n"
+
+                for key in tact_dictionary:
+
+                    if len(tact_dictionary[key]) < 1:
+                        string += f"{str(a)} was unhappy ({key}), but did not have any tactical voting strategy\n\n"
+                        continue
+
+                    if key == "percentage_my_preference":
+                        preference_happiness_count += 1
+
+                    if key == "percentage_social_index":
+                        social_index_count += 1
+
+                    for option in tact_dictionary[key]:
+                        string += f"Type of happiness {key}: Option:{option} new preferences: {tact_dictionary[key][option][0]} , " \
+                                  f"new winner: {tact_dictionary[key][option][1]}, " \
+                                  f"new voting outcome: {tact_dictionary[key][option][2]}, " \
+                                  f"new happiness: {tact_dictionary[key][option][3][key]}, " \
+                                  f"new overall {key} happiness: {tact_dictionary[key][option][4][key]}\n"
+
+            string += "------------------------\n"
+
+        string += f"Risk based on preference happiness: {preference_happiness_count / len(self.agents)}\n"
+        string += f"Risk based on social index happiness: {social_index_count / len(self.agents)}\n\n"
+
+        if self.is_atva:
+
+            string += f"##### ADVANCED TVA: Counter voting strategies #####\n\n"
+
+            for a in self.agents:
+
+                counter_voting_set = self.scheme().counter_vote(a, copy(self))
+
+                string += f"For {str(a)} \n"
+
+                # element is a list = [other_agent, their prefs (list), new results (list),
+                # tactical options of agent after the other agents prefs (dict)]
+                for happiness_type in counter_voting_set:
+                    string += f"\tConsidering {happiness_type}:\n\n"
+
+                    for sublist in counter_voting_set[happiness_type]:
+
+                        other_agent = sublist[0]
+                        other_prefs = sublist[1]
+                        new_results = sublist[2]
+                        new_tact_options = sublist[3]
+
+                        if other_prefs is None:
+                            string += f"\t{other_agent} didn't have any tactical voting strategies, so {a} isn't affected\n"
+                            string += "--------------------------\n"
+                            continue
+
+                        string += f"\tFor the type of happiness: {happiness_type}\n"
+                        string += f"\tIf {str(other_agent)} decides to go with new preferences: {other_prefs}\n"
+                        string += f"\tThe new results would be: {new_results}\n"
+
+                        if len(new_tact_options) < 1:
+                            string += f"\tBut {str(a)} would not have any tactical options for this counter\n"
+                            string += "--------------------------\n"
+                            continue
+
+                        string += f"\tTherefore, {str(a)} has these tactical options:\n"
+
+                        for option in new_tact_options:
+                            string += f"\tType of happiness {happiness_type}: Option:{option} new preferences: {new_tact_options[option][0]} , " \
+                                      f"new winner: {new_tact_options[option][1]}, " \
+                                      f"new voting outcome: {new_tact_options[option][2]}, " \
+                                     f"new happiness: {new_tact_options[option][3][happiness_type]}, " \
+                                     f"new overall {happiness_type} happiness: {new_tact_options[option][4][happiness_type]}\n"
+                        string += "--------------------------\n"
 
         return string
 
 
 def create_and_run_election(n_voters, n_candidates, voting_scheme):
-
     candidates = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     candidates = candidates[:n_candidates]
 
     election = TVA(candidates, voting_scheme, n_voters)
     election.run()
-    election.get_report()   # not the best way do to this, but we need to run this function to properly
-                            # update self.happinesses for overall happiness calculation, unless we just change
-                            # this and somehow transfer overall happiness calculation into election.run()
+    election.get_report()  # not the best way do to this, but we need to run this function to properly
+    # update self.happinesses for overall happiness calculation, unless we just change
+    # this and somehow transfer overall happiness calculation into election.run()
 
     return election.get_overall_happiness(election.happinesses)
 
 
 if __name__ == "__main__":
 
-    candidates = "ABCDEFGHI"
-    voting_scheme = "VotingForTwo"
-    voters = 7
+    candidates = "ABCDEFGHIJK"
+    voting_scheme = "Plurality"
+    voters = 5
+    show_atva_features = True
     happiness_threshold = 99
 
-    preference_happiness_count = 0
-    social_index_count = 0
-
-    election = TVA(candidates, voting_scheme, voters)
+    election = TVA(candidates, voting_scheme, voters, show_atva_features)
     election.run()
 
     print(election.get_report())
     print("\n")
-
-    print("##### TACTICAL VOTING #####")
-
-    # Check how agents would change their votes depending on happiness
-    for agent in election.get_agents():
-
-        print(str(agent))
-        print(f"Initial happiness: {agent.get_happiness(election.results)}")
-
-        d = agent.get_happiness(election.results)
-        if d["percentage_social_index"] > happiness_threshold:
-            print(str(agent) + " was happy and didn't change their preferences\n")
-
-        else:
-            dictionary = election.scheme().tactical_options(agent, election)
-
-            '''
-            TO DO fix the following: since now the dictionaries holding tactical options always have two keys (one per
-            happiness computation strategy), the program never enters the if statement above and therefore never hits
-            "continue"; fixing this would allow for tactical voting risk computation, since I cannot really think
-            of a clever way to do it that is not just setting a variable "agents_with_tactical_options = 0" and
-            just increasing it by 1 every time the continue statement above is not triggered
-            '''
-
-            print(f"For {str(agent)}, the tactical options are:")
-
-            for key in dictionary:
-
-                if len(dictionary[key]) < 1:
-                    print(f"{str(agent)} was unhappy ({key}), but did not have any tactical voting strategy\n")
-                    continue
-
-                if key == "percentage_my_preference":
-                    preference_happiness_count += 1
-
-                if key == "percentage_social_index":
-                    social_index_count += 1
-
-                for option in dictionary[key]:
-                    print(f"Type of happiness {key}: Option:{option} new preferences: {dictionary[key][option][0]} , "
-                          f"new winner: {dictionary[key][option][1]}, "
-                          f"new voting outcome: {dictionary[key][option][2]}, "
-                          f"new happiness: {dictionary[key][option][3][key]}, "
-                          f"new overall {key} happiness: {dictionary[key][option][4][key]}")
-            print("\n")
-
-    print(f"Risk based on preference happiness: {preference_happiness_count/len(election.get_agents())}\n")
-    print(f"Risk based on social index happiness: {social_index_count/len(election.get_agents())}")
 
     '''tests = 1000
     total_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
