@@ -266,6 +266,22 @@ class TVA:
                                      f"new overall {happiness_type} happiness: {new_tact_options[option][4][happiness_type]}\n"
                         string += "--------------------------\n"
 
+            string += f"##### ADVANCED TVA: Concurrent voting strategies #####\n\n"
+
+            new_social_outcomes = self.scheme().concurrent_vote(copy(self))
+
+            for happiness_type in new_social_outcomes:
+
+                string += f"For {happiness_type}, the new social outcome if all agents voted concurrently:\n"
+
+                winner = new_social_outcomes[happiness_type][0]
+                string += f"The new winner is: {winner} if the following agents voted:\n"
+
+                for i in range(1, len(new_social_outcomes[happiness_type])):
+                    nested_list = new_social_outcomes[happiness_type][i]
+
+                    string += f"{nested_list[0]}: {nested_list[1]}, is original: {nested_list[2]}\n"
+
         return string
 
 

@@ -104,11 +104,6 @@ class VotingScheme(ABC):
             if happiness > best_happiness:
                 best_option = percentage_happiness_options[option]
                 best_happiness = happiness
-            elif happiness < best_happiness:
-                continue
-            else:
-                best_option = percentage_happiness_options[option] if winner < original_winner else best_option
-                best_happiness = happiness
 
         best_preference = best_option[0]
 
@@ -140,6 +135,64 @@ class VotingScheme(ABC):
         other_agent.preferences = original_options
 
         return counter_tactical_set
+
+    def concurrent_vote(self, tva_object_copy):
+
+        agent_best_pref = {"percentage_my_preference": {}, "percentage_social_index": {}}
+        social_outcome = {}
+
+        for a in tva_object_copy.get_agents():
+
+            all_tact_options = self.tactical_options(a, tva_object_copy)
+
+            for happiness_type in all_tact_options:
+
+                best_option = None
+                best_happiness = 0
+
+                # Get the best tactical option of the other agent
+                for option in all_tact_options[happiness_type]:
+
+                    sublist = all_tact_options[happiness_type][option]
+                    new_prefs = sublist[0]
+                    new_winner = sublist[1]
+                    new_happiness = sublist[3][happiness_type]
+
+                    if new_winner != new_prefs[0]:
+                        continue
+
+                    if new_happiness > best_happiness:
+                        best_option = sublist
+                        best_happiness = new_happiness
+
+                if best_option is not None:
+                    agent_best_pref[happiness_type][a] = best_option[0]
+                else:
+                    agent_best_pref[happiness_type][a] = list(a.get_preferences().keys())
+
+        for happiness_type in agent_best_pref:
+
+            all_agents = [x for x in agent_best_pref[happiness_type]]
+
+            for a in agent_best_pref[happiness_type]:
+
+                pref_dict = {}
+                for preference in agent_best_pref[happiness_type][a]:
+                    pref_dict[preference] = 0
+
+                self.tally_personal_votes(pref_dict)
+
+            new_results = self.run_scheme(tva_object_copy.candidates, all_agents)
+            latest_winner = get_winner(new_results)
+
+            agent_list = [[str(x), agent_best_pref[happiness_type][x], agent_best_pref[happiness_type][x] == list(x.get_preferences().keys())]
+                          for x in agent_best_pref[happiness_type]]
+
+            agent_list.insert(0, latest_winner)
+
+            social_outcome[happiness_type] = agent_list
+
+        return social_outcome
 
     def counter_vote(self, agent, tva_object_copy):
         """
@@ -398,7 +451,9 @@ class AntiPlurality(VotingScheme):
                 if new_happiness["percentage_social_index"] <= original_happiness["percentage_social_index"]:
                     continue
 
-                tactical_set["percentage_social_index"][i] = [list_copy, new_winner, new_happiness]
+                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                       new_happiness,new_results)
+                tactical_set["percentage_social_index"][i] = [list_copy, new_winner, new_happiness, new_overall_happiness]
 
         return tactical_set
 
