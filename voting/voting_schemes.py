@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import copy
-from agents.agent import get_winner
-from strategies.strategies_borda import StrategiesBorda
-import sys
+from agents.agent import get_winner, Agent
+import itertools
 
 '''
 TO DO: move get_tactical_overall_happiness anywhere else where it makes sense, for now it's here just for convenience sake
@@ -260,24 +259,64 @@ class Borda(VotingScheme):
     were ABC
     """
 
-    def tactical_options(self, agent, tva_object):
-
-        borda_strat = StrategiesBorda("Borda")
-        [better, prefs] = borda_strat.check_if_best(agent, tva_object.results)
-
-        print(prefs)
-
-        if better:
-            sys.exit()
-
-        return None
-
     def tally_personal_votes(self, preferences):
         m = len(preferences)
         i = 1
         for key in preferences:
             preferences[key] = m - i
             i += 1
+
+    def tactical_options(self, agent, tva_object):
+
+        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
+
+        winner = get_winner(tva_object.results)
+        original_list = list(agent.preferences)
+        original_agents = []
+        old_happiness = agent.get_happiness(tva_object.results)
+        i, j = 0, 0
+
+        for other_agent in tva_object.agents:
+            if other_agent != agent:
+                original_agents.append(other_agent)
+
+        for other_order in itertools.permutations(original_list):
+
+            alt_agent = Agent(agent.name, "".join(other_order), tva_object.scheme)
+            original_agents.append(alt_agent)   # after appending the "alternative agent" to the original agents
+                                                # this array no longer really contains only the original agents,
+                                                # but I guess python does not really support changing variable names
+            new_results = self.run_scheme(tva_object.candidates, original_agents)
+            new_winner = get_winner(new_results)
+            new_happiness = agent.get_happiness(new_results)
+
+            """
+            For percentage_my_preference
+            """
+            if new_winner != winner:
+
+                if new_happiness["percentage_my_preference"] > old_happiness["percentage_my_preference"]:
+                    new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                           new_happiness, new_results)
+                    tactical_set["percentage_my_preference"][i] = [other_order, new_winner,
+                                                                   new_results, new_happiness,
+                                                                   new_overall_happiness]
+                    i += 1
+
+            """
+            For percentage_social_index
+            """
+            if new_happiness["percentage_social_index"] > old_happiness["percentage_social_index"]:
+                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent, new_happiness, new_results)
+                tactical_set["percentage_social_index"][j] = [other_order, new_winner,
+                                                              new_results, new_happiness,
+                                                              new_overall_happiness]
+                j += 1
+
+            original_agents.remove(alt_agent)
+            i, j = 0, 0
+
+        return tactical_set
 
 
 class Plurality(VotingScheme):
