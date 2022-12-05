@@ -338,33 +338,39 @@ if __name__ == "__main__":
     total_risk_percentage_my_preference = 0
     total_risk_percentage_social_outcome = 0
     total_happiness_increase = {"percentage_my_preference": 0, "percentage_social_index": 0}
-    n_voters = 5
-    n_candidates = 8
-    voting_scheme = "VotingForTwo"
+    n_voters = 6
+    n_candidates = 4
+    voting_scheme = "Borda"
 
-    for i in range(tests):
+    while True:
 
-        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme)
+        try:
 
-        for key in election_results[0]:
-            total_overall_happiness[key] += election_results[0][key]
+            election_results = create_and_run_election(n_voters, n_candidates, voting_scheme)
 
-        total_risk_percentage_my_preference += election_results[1]
-        total_risk_percentage_social_outcome += election_results[2]
+            for key in election_results[0]:
+                total_overall_happiness[key] += election_results[0][key]
 
-        for key in election_results[3]:
-            elect_3 = election_results[3][key]
-            total_happiness_increase[key] += elect_3
+            total_risk_percentage_my_preference += election_results[1]
+            total_risk_percentage_social_outcome += election_results[2]
 
-    average_overall_happiness = {}
-    for key in total_overall_happiness:
-        average_overall_happiness[key] = total_overall_happiness[key]/tests
-    print(average_overall_happiness)
+            for key in election_results[3]:
+                elect_3 = election_results[3][key]
+                total_happiness_increase[key] += elect_3
 
-    print("Average tactical voting risk for percentage_my_preference: ", str(total_risk_percentage_my_preference/tests))
-    print("Average tactical voting risk for percentage_social_index: ", str(total_risk_percentage_social_outcome/tests))
+            average_overall_happiness = {}
+            for key in total_overall_happiness:
+                average_overall_happiness[key] = total_overall_happiness[key]/tests
+            print(average_overall_happiness)
 
-    average_happiness_increase = {}
-    for key in total_happiness_increase:
-        average_happiness_increase[key] = total_happiness_increase[key]/tests
-    print(average_happiness_increase)
+            print("Average tactical voting risk for percentage_my_preference: ", str(total_risk_percentage_my_preference/tests))
+            print("Average tactical voting risk for percentage_social_index: ", str(total_risk_percentage_social_outcome/tests))
+
+            average_happiness_increase = {}
+            for key in total_happiness_increase:
+                average_happiness_increase[key] = total_happiness_increase[key]/tests
+            print(average_happiness_increase)
+
+        except:
+
+            continue

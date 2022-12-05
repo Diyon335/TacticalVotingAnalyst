@@ -1,9 +1,11 @@
 from abc import ABC, abstractmethod
 from copy import copy
 from agents.agent import get_winner
+from strategies.strategies_borda import StrategiesBorda
+import sys
 
 '''
-TO DO: move this anywhere else where it makes sense, for now it's here just for convenience sake
+TO DO: move get_tactical_overall_happiness anywhere else where it makes sense, for now it's here just for convenience sake
 '''
 
 
@@ -259,7 +261,16 @@ class Borda(VotingScheme):
     """
 
     def tactical_options(self, agent, tva_object):
-        pass
+
+        borda_strat = StrategiesBorda("Borda")
+        [better, prefs] = borda_strat.check_if_best(agent, tva_object.results)
+
+        print(prefs)
+
+        if better:
+            sys.exit()
+
+        return None
 
     def tally_personal_votes(self, preferences):
         m = len(preferences)
