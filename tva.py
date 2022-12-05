@@ -125,13 +125,21 @@ class TVA:
 
         return np_matrix.transpose()
 
-    def get_overall_happiness(self, happinesses):
+    def get_overall_happiness(self):
+
+        for a in self.agents:
+            happiness = a.get_happiness(self.results)
+
+            for happiness_computation in happiness:
+                if happiness_computation not in self.happinesses:
+                    self.happinesses[happiness_computation] = []
+                self.happinesses[happiness_computation].append(happiness[happiness_computation])
 
         overall_happiness = {}
 
-        for happiness_computation in happinesses:
-            overall_happiness[happiness_computation] = sum(happinesses[happiness_computation]) / len(
-                happinesses[happiness_computation])
+        for happiness_computation in self.happinesses:
+            overall_happiness[happiness_computation] = sum(self.happinesses[happiness_computation]) / len(
+                self.happinesses[happiness_computation])
 
         return overall_happiness
 
@@ -168,12 +176,7 @@ class TVA:
             happiness = a.get_happiness(self.results)
             string += f"{a.name} : {happiness} %\n"
 
-            for happiness_computation in happiness:
-                if happiness_computation not in self.happinesses:
-                    self.happinesses[happiness_computation] = []
-                self.happinesses[happiness_computation].append(happiness[happiness_computation])
-
-        overall_happiness = self.get_overall_happiness(self.happinesses)
+        overall_happiness = self.get_overall_happiness()
 
         string += f"The overall happiness is: {overall_happiness}\n\n"
 
@@ -276,9 +279,6 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme):
 
     election = TVA(candidates, voting_scheme, n_voters)
     election.run()
-    election.get_report()   # not the best way do to this, but we need to run this function to properly
-                            # update self.happinesses for overall happiness calculation, unless we just change
-                            # this and somehow transfer overall happiness calculation into election.run()
 
     risk_preference_happiness_count = 0
     risk_social_index_count = 0
