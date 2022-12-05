@@ -265,7 +265,7 @@ class Borda(VotingScheme):
         borda_strat = StrategiesBorda("Borda")
         [better, prefs] = borda_strat.check_if_best(agent, tva_object.results)
 
-        print(prefs)
+        print(better, prefs)
 
         if better:
             sys.exit()

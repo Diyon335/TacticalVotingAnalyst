@@ -339,7 +339,7 @@ if __name__ == "__main__":
     total_risk_percentage_social_outcome = 0
     total_happiness_increase = {"percentage_my_preference": 0, "percentage_social_index": 0}
     n_voters = 6
-    n_candidates = 4
+    n_candidates = 12
     voting_scheme = "Borda"
 
     while True:
