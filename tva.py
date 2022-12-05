@@ -182,6 +182,8 @@ class TVA:
 
         string += "##### TACTICAL VOTING #####\n\n"
 
+        happiness_threshold = 99
+
         # Check how agents would change their votes depending on happiness
         for a in self.agents:
 
@@ -269,35 +271,21 @@ class TVA:
                                      f"new overall {happiness_type} happiness: {new_tact_options[option][4][happiness_type]}\n"
                         string += "--------------------------\n"
 
-            string += f"##### ADVANCED TVA: Concurrent voting strategies #####\n\n"
-
-            new_social_outcomes = self.scheme().concurrent_vote(copy(self))
-
-            for happiness_type in new_social_outcomes:
-
-                string += f"For {happiness_type}, the new social outcome if all agents voted concurrently:\n"
-
-                winner = new_social_outcomes[happiness_type][0]
-                string += f"The new winner is: {winner} if the following agents voted:\n"
-
-                for i in range(1, len(new_social_outcomes[happiness_type])):
-                    nested_list = new_social_outcomes[happiness_type][i]
-
-                    string += f"{nested_list[0]}: {nested_list[1]}, is original: {nested_list[2]}\n"
-
         return string
 
 
-def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
+def create_and_run_election(n_voters, n_candidates, voting_scheme):
 
     candidates = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     candidates = candidates[:n_candidates]
 
-    election = TVA(candidates, voting_scheme, n_voters, is_advanced)
+    election = TVA(candidates, voting_scheme, n_voters, False)
     election.run()
 
     risk_preference_happiness_count = 0
     risk_social_index_count = 0
+
+    happiness_increases = {"percentage_my_preference": [0, 0], "percentage_social_index": [0, 0]}
 
     for agent in election.get_agents():
 
@@ -308,43 +296,65 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
         for key in tactical_dictionary:
             if key == "percentage_my_preference" and len(tactical_dictionary[key]) > 0:
                 risk_preference_happiness_count += 1
+                for tactical_option in tactical_dictionary[key]:
+                    prev_happiness = old_happiness[key]
+                    tact_option = tactical_dictionary[key][tactical_option]
+                    new_happiness = tact_option[3][key]
+                    happiness_increases[key][0] += new_happiness - prev_happiness
+                    happiness_increases[key][1] += 1
             elif key == "percentage_social_index" and len(tactical_dictionary[key]) > 0:
                 risk_social_index_count += 1
+                for tactical_option in tactical_dictionary[key]:
+                    prev_happiness = old_happiness[key]
+                    tact_option = tactical_dictionary[key][tactical_option]
+                    new_happiness = tact_option[3][key]
+                    happiness_increases[key][0] += new_happiness - prev_happiness
+                    happiness_increases[key][1] += 1
 
-    return election.get_overall_happiness(), risk_preference_happiness_count, risk_social_index_count
+    for key in happiness_increases:
+        if happiness_increases[key][0] != 0:
+            happiness_increases[key] = happiness_increases[key][0]/happiness_increases[key][1]
+        else:
+            happiness_increases[key] = 0
+
+    return election.get_overall_happiness(), risk_preference_happiness_count, risk_social_index_count, happiness_increases
 
 
 if __name__ == "__main__":
 
-    candidates = "ABCDEFGHIJK"
+    '''candidates = "ABCDEFGHIJK"
     voting_scheme = "Plurality"
     voters = 5
     show_atva_features = True
-    happiness_threshold = 99
 
     election = TVA(candidates, voting_scheme, voters, show_atva_features)
     election.run()
 
     print(election.get_report())
-    print("\n")
+    print("\n")'''
 
     tests = 1000
     total_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
     total_risk_percentage_my_preference = 0
     total_risk_percentage_social_outcome = 0
-    n_voters = 25
+    total_happiness_increase = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    n_voters = 5
     n_candidates = 8
     voting_scheme = "VotingForTwo"
 
     for i in range(tests):
 
-        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme, show_atva_features)
+        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme)
 
         for key in election_results[0]:
             total_overall_happiness[key] += election_results[0][key]
 
         total_risk_percentage_my_preference += election_results[1]
         total_risk_percentage_social_outcome += election_results[2]
+
+        for key in election_results[3]:
+            elect_3 = election_results[3][key]
+            total_happiness_increase[key] += elect_3
 
     average_overall_happiness = {}
     for key in total_overall_happiness:
@@ -353,3 +363,8 @@ if __name__ == "__main__":
 
     print("Average tactical voting risk for percentage_my_preference: ", str(total_risk_percentage_my_preference/tests))
     print("Average tactical voting risk for percentage_social_index: ", str(total_risk_percentage_social_outcome/tests))
+
+    average_happiness_increase = {}
+    for key in total_happiness_increase:
+        average_happiness_increase[key] = total_happiness_increase[key]/tests
+    print(average_happiness_increase)
