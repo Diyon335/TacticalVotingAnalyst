@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import copy
 from agents.agent import get_winner
+from strategies import strategies_borda
 
 '''
 TO DO: move this anywhere else where it makes sense, for now it's here just for convenience sake
@@ -202,10 +203,13 @@ class Borda(VotingScheme):
     is the number of candidates, and "i" is the position of the preference in their preference list
 
     For example, "A" would receive a score of 3-1 = 2, if the preferences of the agent were ACB, and the candidates
-    were ABC
+    were
     """
 
     def tactical_options(self, agent, tva_object):
+        borda_strat = strategies_borda.Strategies_borda("Borda")
+        [better, prefs] = borda_strat.check_if_best(agent, tva_object.results)
+
         pass
 
     def tally_personal_votes(self, preferences):
