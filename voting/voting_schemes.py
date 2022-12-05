@@ -244,8 +244,6 @@ class Plurality(VotingScheme):
         # current agent
         if not tva_object.results[winner] > (total_agents / 2):
 
-            agent_old_happiness = agent.get_happiness(tva_object.results)
-
             original_list = list(agent.preferences)
             stop_index = original_list.index(winner)
 
@@ -272,7 +270,7 @@ class Plurality(VotingScheme):
 
                     tactical_set["percentage_my_preference"][i] = [new_pref_list, new_winner,
                                                                    results_copy, agent_happiness,
-                                                                   new_overall_happiness, agent_old_happiness]
+                                                                   new_overall_happiness]
 
         """
         For percentage_social_index
@@ -316,8 +314,6 @@ class AntiPlurality(VotingScheme):
         # tactical voting option
         if original_list[-1] != winner:
 
-            agent_old_happiness = agent.get_happiness(tva_object.results)
-
             new_pref_list = copy(original_list)
             temp = new_pref_list[-1]
             new_pref_list[-1] = winner
@@ -336,7 +332,7 @@ class AntiPlurality(VotingScheme):
 
                 tactical_set["percentage_my_preference"][0] = [new_pref_list, new_winner,
                                                                results_copy, agent_happiness,
-                                                               new_overall_happiness, agent_old_happiness]
+                                                               new_overall_happiness]
 
         """
         For percentage_social_index
