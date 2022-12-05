@@ -288,12 +288,12 @@ class TVA:
         return string
 
 
-def create_and_run_election(n_voters, n_candidates, voting_scheme):
+def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
 
     candidates = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     candidates = candidates[:n_candidates]
 
-    election = TVA(candidates, voting_scheme, n_voters)
+    election = TVA(candidates, voting_scheme, n_voters, is_advanced)
     election.run()
 
     risk_preference_happiness_count = 0
@@ -311,7 +311,7 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme):
             elif key == "percentage_social_index" and len(tactical_dictionary[key]) > 0:
                 risk_social_index_count += 1
 
-    return election.get_overall_happiness(election.happinesses), risk_preference_happiness_count, risk_social_index_count
+    return election.get_overall_happiness(), risk_preference_happiness_count, risk_social_index_count
 
 
 if __name__ == "__main__":
@@ -338,7 +338,7 @@ if __name__ == "__main__":
 
     for i in range(tests):
 
-        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme)
+        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme, show_atva_features)
 
         for key in election_results[0]:
             total_overall_happiness[key] += election_results[0][key]
