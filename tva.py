@@ -125,13 +125,21 @@ class TVA:
 
         return np_matrix.transpose()
 
-    def get_overall_happiness(self, happinesses):
+    def get_overall_happiness(self):
+
+        for a in self.agents:
+            happiness = a.get_happiness(self.results)
+
+            for happiness_computation in happiness:
+                if happiness_computation not in self.happinesses:
+                    self.happinesses[happiness_computation] = []
+                self.happinesses[happiness_computation].append(happiness[happiness_computation])
 
         overall_happiness = {}
 
-        for happiness_computation in happinesses:
-            overall_happiness[happiness_computation] = sum(happinesses[happiness_computation]) / len(
-                happinesses[happiness_computation])
+        for happiness_computation in self.happinesses:
+            overall_happiness[happiness_computation] = sum(self.happinesses[happiness_computation]) / len(
+                self.happinesses[happiness_computation])
 
         return overall_happiness
 
@@ -168,12 +176,7 @@ class TVA:
             happiness = a.get_happiness(self.results)
             string += f"{a.name} : {happiness} %\n"
 
-            for happiness_computation in happiness:
-                if happiness_computation not in self.happinesses:
-                    self.happinesses[happiness_computation] = []
-                self.happinesses[happiness_computation].append(happiness[happiness_computation])
-
-        overall_happiness = self.get_overall_happiness(self.happinesses)
+        overall_happiness = self.get_overall_happiness()
 
         string += f"The overall happiness is: {overall_happiness}\n\n"
 
@@ -286,16 +289,29 @@ class TVA:
 
 
 def create_and_run_election(n_voters, n_candidates, voting_scheme):
+
     candidates = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     candidates = candidates[:n_candidates]
 
     election = TVA(candidates, voting_scheme, n_voters)
     election.run()
-    election.get_report()  # not the best way do to this, but we need to run this function to properly
-    # update self.happinesses for overall happiness calculation, unless we just change
-    # this and somehow transfer overall happiness calculation into election.run()
 
-    return election.get_overall_happiness(election.happinesses)
+    risk_preference_happiness_count = 0
+    risk_social_index_count = 0
+
+    for agent in election.get_agents():
+
+        old_happiness = agent.get_happiness(election.results)
+
+        tactical_dictionary = election.scheme().tactical_options(agent, election)
+
+        for key in tactical_dictionary:
+            if key == "percentage_my_preference" and len(tactical_dictionary[key]) > 0:
+                risk_preference_happiness_count += 1
+            elif key == "percentage_social_index" and len(tactical_dictionary[key]) > 0:
+                risk_social_index_count += 1
+
+    return election.get_overall_happiness(election.happinesses), risk_preference_happiness_count, risk_social_index_count
 
 
 if __name__ == "__main__":
@@ -312,19 +328,28 @@ if __name__ == "__main__":
     print(election.get_report())
     print("\n")
 
-    '''tests = 1000
+    tests = 1000
     total_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    total_risk_percentage_my_preference = 0
+    total_risk_percentage_social_outcome = 0
     n_voters = 25
     n_candidates = 8
-    voting_scheme = "Plurality"
+    voting_scheme = "VotingForTwo"
 
     for i in range(tests):
 
-        new_overall_happiness = create_and_run_election(n_voters, n_candidates, voting_scheme)
-        for key in new_overall_happiness:
-            total_overall_happiness[key] += new_overall_happiness[key]
+        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme)
+
+        for key in election_results[0]:
+            total_overall_happiness[key] += election_results[0][key]
+
+        total_risk_percentage_my_preference += election_results[1]
+        total_risk_percentage_social_outcome += election_results[2]
 
     average_overall_happiness = {}
     for key in total_overall_happiness:
         average_overall_happiness[key] = total_overall_happiness[key]/tests
-    print(average_overall_happiness)'''
+    print(average_overall_happiness)
+
+    print("Average tactical voting risk for percentage_my_preference: ", str(total_risk_percentage_my_preference/tests))
+    print("Average tactical voting risk for percentage_social_index: ", str(total_risk_percentage_social_outcome/tests))
