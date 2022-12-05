@@ -189,13 +189,28 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme):
                             # update self.happinesses for overall happiness calculation, unless we just change
                             # this and somehow transfer overall happiness calculation into election.run()
 
-    return election.get_overall_happiness(election.happinesses)
+    risk_preference_happiness_count = 0
+    risk_social_index_count = 0
+
+    for agent in election.get_agents():
+
+        old_happiness = agent.get_happiness(election.results)
+
+        tactical_dictionary = election.scheme().tactical_options(agent, election)
+
+        for key in tactical_dictionary:
+            if key == "percentage_my_preference" and len(tactical_dictionary[key]) > 0:
+                risk_preference_happiness_count += 1
+            elif key == "percentage_social_index" and len(tactical_dictionary[key]) > 0:
+                risk_social_index_count += 1
+
+    return election.get_overall_happiness(election.happinesses), risk_preference_happiness_count, risk_social_index_count
 
 
 if __name__ == "__main__":
 
     candidates = "ABCDEFGHI"
-    voting_scheme = "VotingForTwo"
+    voting_scheme = "Plurality"
     voters = 7
     happiness_threshold = 99
 
@@ -231,12 +246,10 @@ if __name__ == "__main__":
             just increasing it by 1 every time the continue statement above is not triggered
             '''
 
-            print(f"For {str(agent)}, the tactical options are:")
-
             for key in dictionary:
 
                 if len(dictionary[key]) < 1:
-                    print(f"{str(agent)} was unhappy ({key}), but did not have any tactical voting strategy\n")
+                    print(f"{str(agent)} was unhappy for happiness type: {key}, but did not have any tactical voting options\n")
                     continue
 
                 if key == "percentage_my_preference":
@@ -246,7 +259,8 @@ if __name__ == "__main__":
                     social_index_count += 1
 
                 for option in dictionary[key]:
-                    print(f"Type of happiness {key}: Option:{option} new preferences: {dictionary[key][option][0]} , "
+                    print(f"The tactical options of this agent for type of happiness {key} are:\n"
+                          f"Option:{option} new preferences: {dictionary[key][option][0]} , "
                           f"new winner: {dictionary[key][option][1]}, "
                           f"new voting outcome: {dictionary[key][option][2]}, "
                           f"new happiness: {dictionary[key][option][3][key]}, "
@@ -255,20 +269,30 @@ if __name__ == "__main__":
 
     print(f"Risk based on preference happiness: {preference_happiness_count/len(election.get_agents())}\n")
     print(f"Risk based on social index happiness: {social_index_count/len(election.get_agents())}")
+    print()
 
-    '''tests = 1000
+    tests = 1000
     total_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    total_risk_percentage_my_preference = 0
+    total_risk_percentage_social_outcome = 0
     n_voters = 25
     n_candidates = 8
-    voting_scheme = "Plurality"
+    voting_scheme = "VotingForTwo"
 
     for i in range(tests):
 
-        new_overall_happiness = create_and_run_election(n_voters, n_candidates, voting_scheme)
-        for key in new_overall_happiness:
-            total_overall_happiness[key] += new_overall_happiness[key]
+        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme)
+
+        for key in election_results[0]:
+            total_overall_happiness[key] += election_results[0][key]
+
+        total_risk_percentage_my_preference += election_results[1]
+        total_risk_percentage_social_outcome += election_results[2]
 
     average_overall_happiness = {}
     for key in total_overall_happiness:
         average_overall_happiness[key] = total_overall_happiness[key]/tests
-    print(average_overall_happiness)'''
+    print(average_overall_happiness)
+
+    print("Average tactical voting risk for percentage_my_preference: ", str(total_risk_percentage_my_preference/tests))
+    print("Average tactical voting risk for percentage_social_index: ", str(total_risk_percentage_social_outcome/tests))
