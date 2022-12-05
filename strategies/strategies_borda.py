@@ -67,23 +67,39 @@ class Strategies_borda:
         :return pref: agent preferences, updated if (possible = True) to make it do so
         """
         new_prefs = {}
+        #print(prefs)
+        #print(votes)
         up_bound = votes[candidate]+(len(prefs)-1)
-        new_prefs[candidate] = up_bound
-        res = []
+        new_prefs[candidate] = len(prefs)-1
+        #print(new_prefs)
+        res = {}
         for x in prefs:
             if x != candidate:
                 # if our wanted winner wins the tie, x can get up to the same score
-                if candidate > x:
+                if candidate < x:
                     diff = up_bound - votes[x]
-                    res.append(diff)
+                    if(diff < 0):
+                        return [False, {}]
+                    res.update({x:diff})
                 # if our wanted winner loses the tie, x can get up to 1 below the same score
                 else:
                     diff = up_bound - votes[x] - 1
-                    res.append(diff)
-                #print(diff)
+                    if(diff < 0):
+                        return [False, {}]
+                    res.update({x:diff})
+                #print("interim: ",res)
 
-
-        return [False, {}]
+        for x in range(len(prefs)-2,-1,-1):
+            maxi = max(res, key=res.get)
+            if(x > res[maxi]):
+                #print("max was:",res[maxi])
+                return [False, {}]
+            new_prefs.update({maxi:x})
+            res.pop(maxi)
+            #print("new prefs: ",new_prefs)
+            #print()
+        #print("final preferences: ",new_prefs)
+        return [True, new_prefs]
 
 
 # ab = Strategies_borda(vs.Borda())
