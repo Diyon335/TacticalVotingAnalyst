@@ -283,9 +283,9 @@ class TVA:
                 string += f"The new winner is: {winner} if the following agents voted:\n"
 
                 for i in range(1, len(new_social_outcomes[happiness_type])):
-                    nested_list = new_social_outcomes[happiness_type][i]
+                    nested_list = new_social_outcomes[happiness_type]
 
-                    string += f"{nested_list[0]}: {nested_list[1]}, is original: {nested_list[2]}\n"
+                    string += f"{str(nested_list[0])}: {nested_list[1]}, is original: {nested_list[2]}\n"
 
         return string
 
@@ -298,10 +298,12 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
     election = TVA(candidates, voting_scheme, n_voters, is_advanced)
     election.run()
 
+    print("original election results are: ", election.results)
+
     risk_preference_happiness_count = 0
     risk_social_index_count = 0
 
-    happiness_increases = {"percentage_my_preference": [0, 0], "percentage_social_index": [0, 0]}
+    basic_tva_happiness_increases = {"percentage_my_preference": 0, "percentage_social_index": 0}
 
     for agent in election.get_agents():
 
@@ -310,83 +312,224 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
         tactical_dictionary = election.scheme().tactical_options(agent, election)
 
         for key in tactical_dictionary:
+            prev_happiness = old_happiness[key]
             if key == "percentage_my_preference" and len(tactical_dictionary[key]) > 0:
                 risk_preference_happiness_count += 1
-                for tactical_option in tactical_dictionary[key]:
-                    prev_happiness = old_happiness[key]
-                    tact_option = tactical_dictionary[key][tactical_option]
-                    new_happiness = tact_option[3][key]
-                    happiness_increases[key][0] += new_happiness - prev_happiness
-                    happiness_increases[key][1] += 1
+                maximum_tactical_happiness = 0
+                for index in tactical_dictionary[key]:
+                    tactical_option = tactical_dictionary[key][index]
+                    new_happiness = tactical_option[3][key]
+                    if new_happiness > maximum_tactical_happiness:
+                        maximum_tactical_happiness = new_happiness
+                basic_tva_happiness_increases[key] += maximum_tactical_happiness - prev_happiness
             elif key == "percentage_social_index" and len(tactical_dictionary[key]) > 0:
                 risk_social_index_count += 1
-                for tactical_option in tactical_dictionary[key]:
-                    prev_happiness = old_happiness[key]
-                    tact_option = tactical_dictionary[key][tactical_option]
-                    new_happiness = tact_option[3][key]
-                    happiness_increases[key][0] += new_happiness - prev_happiness
-                    happiness_increases[key][1] += 1
+                maximum_tactical_happiness = 0
+                for index in tactical_dictionary[key]:
+                    tactical_option = tactical_dictionary[key][index]
+                    new_happiness = tactical_option[3][key]
+                    if new_happiness > maximum_tactical_happiness:
+                        maximum_tactical_happiness = new_happiness
+                basic_tva_happiness_increases[key] += maximum_tactical_happiness - prev_happiness
 
-    for key in happiness_increases:
-        if happiness_increases[key][0] != 0:
-            happiness_increases[key] = happiness_increases[key][0]/happiness_increases[key][1]
-        else:
-            happiness_increases[key] = 0
+    if basic_tva_happiness_increases["percentage_my_preference"] != 0:
+        total_increase = basic_tva_happiness_increases["percentage_my_preference"]
+        basic_tva_happiness_increases["percentage_my_preference"] = total_increase/risk_preference_happiness_count
+    else:
+        basic_tva_happiness_increases["percentage_my_preference"] = 0
 
-    return election.get_overall_happiness(), risk_preference_happiness_count, risk_social_index_count, happiness_increases
+    if basic_tva_happiness_increases["percentage_social_index"] != 0:
+        total_increase = basic_tva_happiness_increases["percentage_social_index"]
+        basic_tva_happiness_increases["percentage_social_index"] = total_increase/risk_social_index_count
+    else:
+        basic_tva_happiness_increases["percentage_social_index"] = 0
+
+    if is_advanced:
+
+        '''
+        for Concurrent Voting
+        '''
+
+        election_copy = copy(election)
+        concurrent_voting_outcome = election_copy.scheme().concurrent_vote(election_copy)
+        conc_voting_happiness_increases = {"percentage_my_preference": [0, 0], "percentage_social_index": [0, 0]}
+        conc_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
+
+        for key in concurrent_voting_outcome:
+
+            election_copy.results = concurrent_voting_outcome[key][1]
+            conc_overall_happiness[key] = election_copy.get_overall_happiness()[key]
+
+            print("concurrent_voting_outcome[key] is: ", concurrent_voting_outcome[key])
+            print("key is: ", key)
+
+            for agent in [tactical_agent for tactical_agent in concurrent_voting_outcome[key][2:]]:
+                old_happiness = agent[0].get_happiness(election.results)[key]
+                new_happiness = agent[0].get_happiness(election_copy.results)[key]
+                conc_voting_happiness_increases[key][0] = new_happiness - old_happiness
+                print(election.results)
+                print(election_copy.results)
+                print()
+                conc_voting_happiness_increases[key][1] += 1
+
+        for key in conc_voting_happiness_increases:
+            conc_voting_happiness_increases[key] = conc_voting_happiness_increases[key][0]/conc_voting_happiness_increases[key][1]
+
+        '''
+        for Counter Strategic Voting
+        '''
+
+        counter_voting_dict_overall = {"percentage_my_preference": [0, 0], "percentage_social_index": [0, 0]}
+        counter_voting_dict_increases = {"percentage_my_preference": [0, 0], "percentage_social_index": [0, 0]}
+        agents_copy = [copy(agent) for agent in election.get_agents()]
+
+        for agent in agents_copy:
+
+            election_copy = copy(election)
+            old_happiness = agent.get_happiness(election.results)
+
+            counter_voting_options = election_copy.scheme().counter_vote(agent, election_copy)
+
+            for key in counter_voting_options:
+                for counter_set in counter_voting_options[key]:
+                    if counter_set[3] is not None:
+                        if len(counter_set[3]) > 0:
+                            maximum_tactical_happiness = 0
+                            best_tactical_option = None
+                            for index in counter_set[3]:
+                                tactical_option = counter_set[3][index]
+                                if tactical_option[3][key] > maximum_tactical_happiness:
+                                    maximum_tactical_happiness = tactical_option[3][key]
+                                    best_tactical_option = tactical_option
+
+                            counter_voting_dict_overall[key][0] += best_tactical_option[4][key]
+                            counter_voting_dict_increases[key][0] += best_tactical_option[3][key] - old_happiness[key]
+
+                        else:
+
+                            election_copy.results = counter_set[4]
+                            new_overall_happiness = election_copy.get_overall_happiness()[key]
+                            counter_voting_dict_overall[key][0] += new_overall_happiness
+                            new_happiness = agent.get_happiness(counter_set[4])[key]
+                            counter_voting_dict_increases[key][0] += new_happiness - old_happiness[key]
+
+                        counter_voting_dict_overall[key][1] += 1
+                        counter_voting_dict_increases[key][1] += 1
+
+        for key in counter_voting_dict_overall:
+            if counter_voting_dict_overall[key][1] != 0:
+                counter_voting_dict_overall[key] = counter_voting_dict_overall[key][0]/counter_voting_dict_overall[key][1]
+            else:
+                counter_voting_dict_overall[key] = None
+
+        for key in counter_voting_dict_increases:
+            if counter_voting_dict_increases[key][1] != 0:
+                counter_voting_dict_increases[key] = counter_voting_dict_increases[key][0]/counter_voting_dict_increases[key][1]
+            else:
+                counter_voting_dict_increases[key] = None
+
+
+    return election.get_overall_happiness(), risk_preference_happiness_count, risk_social_index_count, \
+           basic_tva_happiness_increases, conc_overall_happiness, conc_voting_happiness_increases,\
+           counter_voting_dict_overall, counter_voting_dict_increases
 
 
 if __name__ == "__main__":
 
-    '''candidates = "ABCDEFGHIJK"
-    voting_scheme = "Plurality"
-    voters = 5
     show_atva_features = True
+
+    candidates = "ABCDEFGHI"
+    voting_scheme = "Plurality"
+    voters = 6
 
     election = TVA(candidates, voting_scheme, voters, show_atva_features)
     election.run()
 
     print(election.get_report())
-    print("\n")'''
+    print("\n")
 
-    tests = 1000
-    total_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    '''tests = 100
+    total_basic_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
     total_risk_percentage_my_preference = 0
     total_risk_percentage_social_outcome = 0
-    total_happiness_increase = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    total_basic_happiness_increase = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    total_conc_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    total_conc_voting_happiness_increases = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    counter_voting_dict_overall = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    counter_voting_dict_increases = {"percentage_my_preference": 0, "percentage_social_index": 0}
+    j = 0
+
     n_voters = 6
-    n_candidates = 12
-    voting_scheme = "Borda"
+    n_candidates = 9
+    voting_scheme = "Plurality"
 
-    while True:
+    for i in range(tests):
 
-        try:
+        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme, show_atva_features)
 
-            election_results = create_and_run_election(n_voters, n_candidates, voting_scheme, show_atva_features)
+        for key in election_results[0]:
+            total_basic_overall_happiness[key] += election_results[0][key]
 
-            for key in election_results[0]:
-                total_overall_happiness[key] += election_results[0][key]
+        total_risk_percentage_my_preference += election_results[1]
+        total_risk_percentage_social_outcome += election_results[2]
 
-            total_risk_percentage_my_preference += election_results[1]
-            total_risk_percentage_social_outcome += election_results[2]
+        for key in election_results[3]:
+            elect_3 = election_results[3][key]
+            total_basic_happiness_increase[key] += elect_3
 
-            for key in election_results[3]:
-                elect_3 = election_results[3][key]
-                total_happiness_increase[key] += elect_3
+        for key in election_results[4]:
+            elect_4 = election_results[4][key]
+            total_conc_overall_happiness[key] += elect_4
 
-            average_overall_happiness = {}
-            for key in total_overall_happiness:
-                average_overall_happiness[key] = total_overall_happiness[key]/tests
-            print(average_overall_happiness)
+        for key in election_results[5]:
+            elect_5 = election_results[5][key]
+            total_conc_voting_happiness_increases[key] += elect_5
 
-            print("Average tactical voting risk for percentage_my_preference: ", str(total_risk_percentage_my_preference/tests))
-            print("Average tactical voting risk for percentage_social_index: ", str(total_risk_percentage_social_outcome/tests))
+        for key in election_results[6]:
+            elect_6 = election_results[6][key]
+            if elect_6 is not None:
+                counter_voting_dict_overall[key] += elect_6
+                j += 1
 
-            average_happiness_increase = {}
-            for key in total_happiness_increase:
-                average_happiness_increase[key] = total_happiness_increase[key]/tests
-            print(average_happiness_increase)
+        for key in election_results[7]:
+            elect_7 = election_results[7][key]
+            if elect_7 is not None:
+                counter_voting_dict_increases[key] += elect_7
 
-        except:
+    basic_average_overall_happiness = {}
+    for key in total_basic_overall_happiness:
+        basic_average_overall_happiness[key] = total_basic_overall_happiness[key]/tests
+    print(basic_average_overall_happiness)
 
-            continue
+    print("Average tactical voting risk for percentage_my_preference: ", str(total_risk_percentage_my_preference/tests))
+    print("Average tactical voting risk for percentage_social_index: ", str(total_risk_percentage_social_outcome/tests))
+
+    basic_average_happiness_increase = {}
+    for key in total_basic_happiness_increase:
+        basic_average_happiness_increase[key] = total_basic_happiness_increase[key]/tests
+    print(basic_average_happiness_increase)
+
+    conc_average_overall_happiness = {}
+    for key in total_conc_overall_happiness:
+        conc_average_overall_happiness[key] = total_conc_overall_happiness[key]/tests
+    print(conc_average_overall_happiness)
+
+    conc_average_voting_happiness_increases = {}
+    for key in total_conc_voting_happiness_increases:
+        conc_average_voting_happiness_increases[key] = total_conc_voting_happiness_increases[key] / tests
+    print(conc_average_voting_happiness_increases)
+
+    counter_average_voting_dict_overall = {}
+    for key in counter_voting_dict_overall:
+        counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / j
+    print(counter_average_voting_dict_overall)
+
+    counter_average_voting_dict_increases = {}
+    for key in counter_voting_dict_increases:
+        counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / j
+    print(counter_average_voting_dict_increases)
+
+    print(j)'''
+
+
+

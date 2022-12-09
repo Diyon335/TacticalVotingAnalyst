@@ -107,6 +107,10 @@ class VotingScheme(ABC):
                 best_option = percentage_happiness_options[option]
                 best_happiness = happiness
 
+        '''
+        TO DO: make the following work when best_option is never updated and is None
+        '''
+
         best_preference = best_option[0]
 
         # Get the personal tally if the other agent had chosen their best tactical option
@@ -130,13 +134,46 @@ class VotingScheme(ABC):
         # Depending on the new social outcome, compute the agent's new tactical options
         counter_tactical_set = [other_agent, list(best_preference_dictionary.keys()),
                                 new_results_list,
-                                self.tactical_options(agent, tva_object_copy)[key]]
+                                self.tactical_options(agent, tva_object_copy)[key],
+                                new_results]
 
         # Reset to defaults so future elections aren't hindered by these changes
         tva_object_copy.results = original_results
         other_agent.preferences = original_options
 
         return counter_tactical_set
+
+    def counter_vote(self, agent, tva_object_copy):
+        """
+        Computes the dictionary of counter votes for an agent, once each other agent has voted tactically.
+        For example, when an election is run, each agent may have tactical voting strategies. If an agent was to apply
+        their best strategic preferences, the agent of interest may be able to counter that strategic vote.
+
+        This method returns a dictionary, whose indexes are the types of happiness. Each key has a list of lists. Each
+        nested list contains an opposing agent, with their best tactical preference, the resulting outcome, and the
+        possible tactical options of the agent to counter
+
+        :param agent: An agent object, for whom the counter tactical votes must be made
+        :param tva_object_copy: A copy of the original tva object
+        :return: Returns a dictionary as mentioned above
+        """
+
+        counter_voting_options = {"percentage_my_preference": [], "percentage_social_index": []}
+
+        all_other_agents = [copy(a) for a in tva_object_copy.get_agents() if not a == agent]
+
+        for other_agent in all_other_agents:
+            counter_voting_options["percentage_my_preference"].append(self.counter_ts_by_key("percentage_my_preference",
+                                                                                             agent, other_agent,
+                                                                                             tva_object_copy,
+                                                                                             all_other_agents))
+
+            counter_voting_options["percentage_social_index"].append(self.counter_ts_by_key("percentage_social_index",
+                                                                                            agent, other_agent,
+                                                                                            tva_object_copy,
+                                                                                            all_other_agents))
+
+        return counter_voting_options
 
     def concurrent_vote(self, tva_object_copy):
 
@@ -174,59 +211,33 @@ class VotingScheme(ABC):
 
         for happiness_type in agent_best_pref:
 
-            all_agents = [x for x in agent_best_pref[happiness_type]]
+            all_agents = [agent for agent in agent_best_pref[happiness_type]]
 
-            for a in agent_best_pref[happiness_type]:
+            for agent in all_agents:
 
                 pref_dict = {}
-                for preference in agent_best_pref[happiness_type][a]:
-                    pref_dict[preference] = 0
+                for candidate in agent_best_pref[happiness_type][agent]:
+                    pref_dict[candidate] = 0
 
                 self.tally_personal_votes(pref_dict)
 
             new_results = self.run_scheme(tva_object_copy.candidates, all_agents)
             latest_winner = get_winner(new_results)
 
-            agent_list = [[str(x), agent_best_pref[happiness_type][x], agent_best_pref[happiness_type][x] == list(x.get_preferences().keys())]
-                          for x in agent_best_pref[happiness_type]]
+            agent_list = [[agent, agent_best_pref[happiness_type][agent], agent_best_pref[happiness_type][agent] == list(agent.get_preferences().keys())]
+                          for agent in agent_best_pref[happiness_type]]
 
             agent_list.insert(0, latest_winner)
+            agent_list.insert(1, new_results)
 
             social_outcome[happiness_type] = agent_list
 
+        # social_outcome is a list (see above) with the new winner in position 0, new social outcome after all agents
+        # vote tactically and then a number of lists: these lists consist of one list per agent containing
+        # [agent, ordered preferences of the agent, a True if the previous element is the honest preferences and a
+        # False if the previous element if the tactical preferences]
+
         return social_outcome
-
-    def counter_vote(self, agent, tva_object_copy):
-        """
-        Computes the dictionary of counter votes for an agent, once each other agent has voted tactically.
-        For example, when an election is run, each agent may have tactical voting strategies. If an agent was to apply
-        their best strategic preferences, the agent of interest may be able to counter that strategic vote.
-
-        This method returns a dictionary, whose indexes are the types of happiness. Each key has a list of lists. Each
-        nested list contains an opposing agent, with their best tactical preference, the resulting outcome, and the
-        possible tactical options of the agent to counter
-
-        :param agent: An agent object, for whom the counter tactical votes must be made
-        :param tva_object_copy: A copy of the original tva object
-        :return: Returns a dictionary as mentioned above
-        """
-
-        counter_voting_options = {"percentage_my_preference": [], "percentage_social_index": []}
-
-        all_other_agents = [copy(a) for a in tva_object_copy.get_agents() if not a == agent]
-
-        for other_agent in all_other_agents:
-            counter_voting_options["percentage_my_preference"].append(self.counter_ts_by_key("percentage_my_preference",
-                                                                                             agent, other_agent,
-                                                                                             tva_object_copy,
-                                                                                             all_other_agents))
-
-            counter_voting_options["percentage_social_index"].append(self.counter_ts_by_key("percentage_social_index",
-                                                                                            agent, other_agent,
-                                                                                            tva_object_copy,
-                                                                                            all_other_agents))
-
-        return counter_voting_options
 
     @abstractmethod
     def tactical_options(self, agent, tva_object):
@@ -389,8 +400,9 @@ class AntiPlurality(VotingScheme):
 
             new_winner = get_winner(results_copy)
 
-            if new_winner != winner:
-                agent_happiness = agent.get_happiness(results_copy)
+            agent_happiness = agent.get_happiness(results_copy)
+
+            if agent_happiness["percentage_my_preference"] > agent.get_happiness(tva_object.results)["percentage_my_preference"]:
                 new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                        agent_happiness, results_copy)
 
@@ -464,7 +476,8 @@ class AntiPlurality(VotingScheme):
 
                 new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                        new_happiness,new_results)
-                tactical_set["percentage_social_index"][i] = [list_copy, new_winner, new_happiness, new_overall_happiness]
+                tactical_set["percentage_social_index"][i] = [list_copy, new_winner, new_results,
+                                                              new_happiness, new_overall_happiness]
 
         return tactical_set
 
