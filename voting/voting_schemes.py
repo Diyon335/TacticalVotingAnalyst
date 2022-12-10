@@ -176,20 +176,43 @@ class VotingScheme(ABC):
         return counter_voting_options
 
     def concurrent_vote(self, tva_object_copy):
+        """
+        Concurrent voting is when every agent decides to apply their tactical vote at the same time, thereby (maybe)
+        changing the outcome of the election.
+
+        :param tva_object_copy
+        :returns - A dictionary with a list for the two types of happiness
+
+        The following indexes in each list contains:
+        0 - new winner
+        1 - new social outcome
+        2 -> n - a nested lists
+
+        The following indexes in each nested list contains:
+        0 - Agent object
+        1 - Preference list of the agent
+        2 - Boolean, True if preference list is the agent's original preferences, False if they are tactical
+        """
 
         agent_best_pref = {"percentage_my_preference": {}, "percentage_social_index": {}}
         social_outcome = {}
 
+        # Get tactical options for each agent
         for a in tva_object_copy.get_agents():
 
             all_tact_options = self.tactical_options(a, tva_object_copy)
 
             for happiness_type in all_tact_options:
 
+                # If no tactical options to begin with, do not update new preferences
+                if len(all_tact_options[happiness_type]) < 1:
+                    agent_best_pref[happiness_type][a] = list(a.get_preferences().keys())
+                    continue
+
                 best_option = None
                 best_happiness = 0
 
-                # Get the best tactical option of the other agent
+                # Get the best tactical option of the agent
                 for option in all_tact_options[happiness_type]:
 
                     sublist = all_tact_options[happiness_type][option]
@@ -197,21 +220,29 @@ class VotingScheme(ABC):
                     new_winner = sublist[1]
                     new_happiness = sublist[3][happiness_type]
 
+                    # A concurrent vote is not considered if the new winner isn't an agent's best preferred
+                    # candidate
                     if new_winner != new_prefs[0]:
+                        agent_best_pref[happiness_type][a] = list(a.get_preferences().keys())
                         continue
 
                     if new_happiness > best_happiness:
                         best_option = sublist
                         best_happiness = new_happiness
 
-                if best_option is not None:
-                    agent_best_pref[happiness_type][a] = best_option[0]
-                else:
-                    agent_best_pref[happiness_type][a] = list(a.get_preferences().keys())
+                # Add best option to the dict
+                agent_best_pref[happiness_type][a] = best_option[0]
 
+        # Run an election for each happiness type
         for happiness_type in agent_best_pref:
 
             all_agents = [agent for agent in agent_best_pref[happiness_type]]
+
+            agents_original_prefs = {}
+
+            # Save original preference
+            for agent in all_agents:
+                agents_original_prefs[agent] = agent.preferences
 
             for agent in all_agents:
 
@@ -219,10 +250,16 @@ class VotingScheme(ABC):
                 for candidate in agent_best_pref[happiness_type][agent]:
                     pref_dict[candidate] = 0
 
+                # Tally votes with new prefs
                 self.tally_personal_votes(pref_dict)
+                agent.preferences = pref_dict
 
             new_results = self.run_scheme(tva_object_copy.candidates, all_agents)
             latest_winner = get_winner(new_results)
+
+            # Revert to original preferences to perform boolean check below
+            for agent in all_agents:
+                agent.preferences = agents_original_prefs[agent]
 
             agent_list = [[agent, agent_best_pref[happiness_type][agent], agent_best_pref[happiness_type][agent] == list(agent.get_preferences().keys())]
                           for agent in agent_best_pref[happiness_type]]
@@ -231,11 +268,6 @@ class VotingScheme(ABC):
             agent_list.insert(1, new_results)
 
             social_outcome[happiness_type] = agent_list
-
-        # social_outcome is a list (see above) with the new winner in position 0, new social outcome after all agents
-        # vote tactically and then a number of lists: these lists consist of one list per agent containing
-        # [agent, ordered preferences of the agent, a True if the previous element is the honest preferences and a
-        # False if the previous element if the tactical preferences]
 
         return social_outcome
 

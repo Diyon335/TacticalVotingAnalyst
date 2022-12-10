@@ -282,8 +282,9 @@ class TVA:
                 winner = new_social_outcomes[happiness_type][0]
                 string += f"The new winner is: {winner} if the following agents voted:\n"
 
-                for i in range(1, len(new_social_outcomes[happiness_type])):
-                    nested_list = new_social_outcomes[happiness_type]
+                agent_list = new_social_outcomes[happiness_type][2:]
+                print("agent list",agent_list)
+                for nested_list in agent_list:
 
                     string += f"{str(nested_list[0])}: {nested_list[1]}, is original: {nested_list[2]}\n"
 
@@ -429,16 +430,17 @@ if __name__ == "__main__":
 
     show_atva_features = True
 
-    '''candidates = "ABCDEFGHI"
+    candidates = "ABCDEFGHIJKL"
     voting_scheme = "Plurality"
-    voters = 6
+    voters = 8
 
     election = TVA(candidates, voting_scheme, voters, show_atva_features)
     election.run()
 
     print(election.get_report())
-    print("\n")'''
+    print("\n")
 
+    '''
     tests = 100
     total_basic_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
     total_risk_percentage_my_preference = 0
@@ -529,7 +531,7 @@ if __name__ == "__main__":
             counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / k
     print(counter_average_voting_dict_increases)
 
-    print(j, k)
+    print(j, k)'''
 
 
 
