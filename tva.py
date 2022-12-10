@@ -431,7 +431,7 @@ if __name__ == "__main__":
     show_atva_features = True
 
     candidates = "ABCDEFGHIJKL"
-    voting_scheme = "Plurality"
+    voting_scheme = "VotingForTwo"
     voters = 8
 
     election = TVA(candidates, voting_scheme, voters, show_atva_features)
@@ -440,7 +440,7 @@ if __name__ == "__main__":
     print(election.get_report())
     print("\n")
 
-    '''
+"""
     tests = 100
     total_basic_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
     total_risk_percentage_my_preference = 0
@@ -531,7 +531,7 @@ if __name__ == "__main__":
             counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / k
     print(counter_average_voting_dict_increases)
 
-    print(j, k)'''
+    print(j, k)
 
-
+"""
 

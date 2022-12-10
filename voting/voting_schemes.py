@@ -230,8 +230,11 @@ class VotingScheme(ABC):
                         best_option = sublist
                         best_happiness = new_happiness
 
-                # Add best option to the dict
-                agent_best_pref[happiness_type][a] = best_option[0]
+                # Add best option to the dict. Sometimes
+                if best_option is None:
+                    agent_best_pref[happiness_type][a] = list(a.get_preferences().keys())
+                else:
+                    agent_best_pref[happiness_type][a] = best_option[0]
 
         # Run an election for each happiness type
         for happiness_type in agent_best_pref:
