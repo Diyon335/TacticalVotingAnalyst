@@ -298,8 +298,6 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
     election = TVA(candidates, voting_scheme, n_voters, is_advanced)
     election.run()
 
-    print("original election results are: ", election.results)
-
     risk_preference_happiness_count = 0
     risk_social_index_count = 0
 
@@ -360,16 +358,10 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
             election_copy.results = concurrent_voting_outcome[key][1]
             conc_overall_happiness[key] = election_copy.get_overall_happiness()[key]
 
-            print("concurrent_voting_outcome[key] is: ", concurrent_voting_outcome[key])
-            print("key is: ", key)
-
             for agent in [tactical_agent for tactical_agent in concurrent_voting_outcome[key][2:]]:
                 old_happiness = agent[0].get_happiness(election.results)[key]
                 new_happiness = agent[0].get_happiness(election_copy.results)[key]
                 conc_voting_happiness_increases[key][0] = new_happiness - old_happiness
-                print(election.results)
-                print(election_copy.results)
-                print()
                 conc_voting_happiness_increases[key][1] += 1
 
         for key in conc_voting_happiness_increases:
@@ -428,7 +420,6 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
             else:
                 counter_voting_dict_increases[key] = None
 
-
     return election.get_overall_happiness(), risk_preference_happiness_count, risk_social_index_count, \
            basic_tva_happiness_increases, conc_overall_happiness, conc_voting_happiness_increases,\
            counter_voting_dict_overall, counter_voting_dict_increases
@@ -438,7 +429,7 @@ if __name__ == "__main__":
 
     show_atva_features = True
 
-    candidates = "ABCDEFGHI"
+    '''candidates = "ABCDEFGHI"
     voting_scheme = "Plurality"
     voters = 6
 
@@ -446,9 +437,9 @@ if __name__ == "__main__":
     election.run()
 
     print(election.get_report())
-    print("\n")
+    print("\n")'''
 
-    '''tests = 100
+    tests = 100
     total_basic_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
     total_risk_percentage_my_preference = 0
     total_risk_percentage_social_outcome = 0
@@ -457,11 +448,11 @@ if __name__ == "__main__":
     total_conc_voting_happiness_increases = {"percentage_my_preference": 0, "percentage_social_index": 0}
     counter_voting_dict_overall = {"percentage_my_preference": 0, "percentage_social_index": 0}
     counter_voting_dict_increases = {"percentage_my_preference": 0, "percentage_social_index": 0}
-    j = 0
+    j, k = 0, 0
 
     n_voters = 6
     n_candidates = 9
-    voting_scheme = "Plurality"
+    voting_scheme = "AntiPlurality"
 
     for i in range(tests):
 
@@ -489,7 +480,10 @@ if __name__ == "__main__":
             elect_6 = election_results[6][key]
             if elect_6 is not None:
                 counter_voting_dict_overall[key] += elect_6
-                j += 1
+                if key == "percentage_my_preference":
+                    j += 1
+                else:
+                    k += 1
 
         for key in election_results[7]:
             elect_7 = election_results[7][key]
@@ -521,15 +515,21 @@ if __name__ == "__main__":
 
     counter_average_voting_dict_overall = {}
     for key in counter_voting_dict_overall:
-        counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / j
+        if key == "percentage_my_preference":
+            counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / j
+        else:
+            counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / k
     print(counter_average_voting_dict_overall)
 
     counter_average_voting_dict_increases = {}
     for key in counter_voting_dict_increases:
-        counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / j
+        if key == "percentage_my_preference":
+            counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / j
+        else:
+            counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / k
     print(counter_average_voting_dict_increases)
 
-    print(j)'''
+    print(j, k)
 
 
 
