@@ -283,7 +283,6 @@ class TVA:
                 string += f"The new winner is: {winner} if the following agents voted:\n"
 
                 agent_list = new_social_outcomes[happiness_type][2:]
-                print("agent list",agent_list)
                 for nested_list in agent_list:
 
                     string += f"{str(nested_list[0])}: {nested_list[1]}, is original: {nested_list[2]}\n"
