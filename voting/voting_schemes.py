@@ -85,7 +85,6 @@ class VotingScheme(ABC):
         # Hold original values to reset later
         original_options = other_agent.preferences
         original_results = tva_object_copy.results
-        original_winner = get_winner(original_results)
 
         percentage_happiness_options = other_tactical_options[key]
 
@@ -101,7 +100,6 @@ class VotingScheme(ABC):
 
             sublist = percentage_happiness_options[option]
             happiness = sublist[3][key]
-            winner = sublist[1]
 
             if happiness > best_happiness:
                 best_option = percentage_happiness_options[option]

@@ -1,6 +1,3 @@
-import operator
-
-
 def get_winner(results):
     """
     Returns the winning candidate. In the case of a tie, the winner will be chosen alphabetically (i.e., the agent
@@ -22,6 +19,7 @@ def get_winner(results):
             continue
 
         else:
+            # Lexicographically determine winner if votes are equal
             if candidate < winner:
                 winner = candidate
                 max_votes = results[candidate]
@@ -50,6 +48,7 @@ class Agent:
         for preference in preference_string:
             self.preferences[preference] = 0
 
+        # Tally votes depending on voting scheme
         voting_scheme().tally_personal_votes(self.preferences)
 
     def __str__(self):
