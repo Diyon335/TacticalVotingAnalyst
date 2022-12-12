@@ -222,8 +222,8 @@ class TVA:
 
             string += "------------------------\n"
 
-        string += f"Risk based on H_p: {preference_happiness_count / len(self.agents)}\n"
-        string += f"Risk based on H_si: {social_index_count / len(self.agents)}\n\n"
+        string += f"Risk based on H_p: {(preference_happiness_count / len(self.agents))*100}%\n"
+        string += f"Risk based on H_si: {(social_index_count / len(self.agents))*100}%\n\n"
 
         if self.is_atva:
 
@@ -429,9 +429,9 @@ if __name__ == "__main__":
 
     show_atva_features = True
 
-    candidates = "ABCDEFGHIJKL"
-    voting_scheme = "Plurality"
-    voters = 8
+    candidates = "ABCDE"
+    voting_scheme = "Borda"
+    voters = 5
 
     election = TVA(candidates, voting_scheme, voters, show_atva_features)
     election.run()
