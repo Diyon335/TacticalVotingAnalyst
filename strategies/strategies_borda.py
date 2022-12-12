@@ -138,7 +138,6 @@ class Strategies_borda:
         if database is not list:
             database = [database]
         for x in database:
-            print("x is: ",x)
             i = len(prefs) - 1
             new_prefs.append({candidate: i})
             for y in x:
