@@ -307,16 +307,50 @@ class Borda(VotingScheme):
     """
 
     def tactical_options(self, agent, tva_object):
+        borda_strat = strategies_borda.Strategies_borda("Borda", 50)
+        [res_pref, res_si] = borda_strat.check_if_best(agent, tva_object.results)
+        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
 
-        borda_strat = StrategiesBorda("Borda")
-        [better, prefs] = borda_strat.check_if_best(agent, tva_object.results)
+        original_agents = []
+        # remake agent set without our agent
+        for other_agent in tva_object.agents:
+            if other_agent != agent:
+                original_agents.append(other_agent)
 
-        print(better, prefs)
+        if len(res_pref) > 0:
+            res_pref_winner = next(iter(res_pref[0]))
+            i = 0
+            for x in res_pref:
+                alt_agent = Agent(agent.name, ''.join(x), tva_object.scheme)
+                original_agents.append(alt_agent)
+                new_results = self.run_scheme(tva_object.candidates, original_agents)
+                new_happiness = agent.get_happiness(new_results)
 
-        if better:
-            sys.exit()
+                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                       new_happiness, new_results)
+                tactical_set["percentage_my_preference"][i] = [x, res_pref_winner,
+                                                               new_results, new_happiness,
+                                                               new_overall_happiness]
+                i += 1
+                original_agents.pop()
 
-        return None
+        if len(res_si) > 0:
+            j = 0
+            for y in res_pref:
+                alt_agent = Agent(agent.name, ''.join(y), tva_object.scheme)
+                original_agents.append(alt_agent)
+                new_results = self.run_scheme(tva_object.candidates, original_agents)
+                new_happiness = agent.get_happiness(new_results)
+                new_winner = get_winner(new_results)
+
+                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                       new_happiness, new_results)
+                tactical_set["percentage_social_index"][j] = [y, new_winner,
+                                                               new_results, new_happiness,
+                                                               new_overall_happiness]
+                j += 1
+                original_agents.pop()
+        return tactical_set
 
     def tally_personal_votes(self, preferences):
         m = len(preferences)
