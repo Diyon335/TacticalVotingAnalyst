@@ -83,7 +83,7 @@ class Agent:
         pref_list = list(self.preferences.keys())
         index = pref_list.index(get_winner(result_dict))
 
-        happiness_dict["percentage_my_preference"] = ((len(pref_list) - index - 1)/(len(pref_list) - 1)) * 100
+        happiness_dict["H_p"] = ((len(pref_list) - index - 1)/(len(pref_list) - 1)) * 100
 
         """
         What is the index of my first preference in the results
@@ -92,7 +92,7 @@ class Agent:
 
         index = result_list.index(pref_list[0])
 
-        happiness_dict["percentage_social_index"] = ((len(result_list) - index - 1)/(len(result_list) - 1)) * 100
+        happiness_dict["H_si"] = ((len(result_list) - index - 1)/(len(result_list) - 1)) * 100
 
         return happiness_dict
 
