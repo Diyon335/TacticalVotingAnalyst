@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from copy import copy
-from agents.agent import get_winner
-from strategies.strategies_borda import StrategiesBorda
+from agents.agent import get_winner, Agent
+from strategies import strategies_borda
 import sys
 
 '''
@@ -203,6 +203,9 @@ class VotingScheme(ABC):
             all_tact_options = self.tactical_options(a, tva_object_copy)
 
             for happiness_type in all_tact_options:
+                print("hapiness type: ",happiness_type)
+                print("hapiness type: ",all_tact_options[happiness_type])
+                print(len(all_tact_options[happiness_type]))
 
                 # If no tactical options to begin with, do not update new preferences
                 if len(all_tact_options[happiness_type]) < 1:
@@ -214,8 +217,8 @@ class VotingScheme(ABC):
 
                 # Get the best tactical option of the agent
                 for option in all_tact_options[happiness_type]:
-
                     sublist = all_tact_options[happiness_type][option]
+                    print(sublist)
                     new_prefs = sublist[0]
                     new_winner = sublist[1]
                     new_happiness = sublist[3][happiness_type]
@@ -328,7 +331,7 @@ class Borda(VotingScheme):
 
                 new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                        new_happiness, new_results)
-                tactical_set["percentage_my_preference"][i] = [x, res_pref_winner,
+                tactical_set["percentage_my_preference"][i] = [list(x.keys()), res_pref_winner,
                                                                new_results, new_happiness,
                                                                new_overall_happiness]
                 i += 1
@@ -345,7 +348,7 @@ class Borda(VotingScheme):
 
                 new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                        new_happiness, new_results)
-                tactical_set["percentage_social_index"][j] = [y, new_winner,
+                tactical_set["percentage_social_index"][j] = [list(y.keys()), new_winner,
                                                                new_results, new_happiness,
                                                                new_overall_happiness]
                 j += 1

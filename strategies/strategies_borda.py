@@ -130,11 +130,15 @@ class Strategies_borda:
 
         while max_losers < len(sorted_lee) and sorted_lee[-1-max_losers][1] > max_losers:
             max_losers += 1
-        if max_losers == 0: return []
+        if max_losers == 0:
+            return []
         database = self.populate_recur([], sorted_lee, max_losers-1, [], False)
 
         new_prefs = []
+        if database is not list:
+            database = [database]
         for x in database:
+            print("x is: ",x)
             i = len(prefs) - 1
             new_prefs.append({candidate: i})
             for y in x:
