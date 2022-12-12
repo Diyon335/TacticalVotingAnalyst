@@ -39,7 +39,7 @@ class Strategies_borda:
         res_si = self.highest_position(next(iter(prefs)), prefs, new_votes)
         for x in prefs:
             if x == winner:
-                return [self.check_winner_possible(x, prefs, new_votes), res_si]
+                return [[], res_si]
             res_pref = self.check_winner_possible(x, prefs, new_votes)
             if len(res_pref) > 0:
                 return [res_pref, res_si]
