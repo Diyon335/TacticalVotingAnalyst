@@ -158,20 +158,20 @@ class VotingScheme(ABC):
         :return: Returns a dictionary as mentioned above
         """
 
-        counter_voting_options = {"percentage_my_preference": [], "percentage_social_index": []}
+        counter_voting_options = {"H_p": [], "H_si": []}
 
         all_other_agents = [copy(a) for a in tva_object_copy.get_agents() if not a == agent]
 
         for other_agent in all_other_agents:
-            counter_voting_options["percentage_my_preference"].append(self.counter_ts_by_key("percentage_my_preference",
-                                                                                             agent, other_agent,
-                                                                                             tva_object_copy,
-                                                                                             all_other_agents))
+            counter_voting_options["H_p"].append(self.counter_ts_by_key("H_p",
+                                                                        agent, other_agent,
+                                                                        tva_object_copy,
+                                                                        all_other_agents))
 
-            counter_voting_options["percentage_social_index"].append(self.counter_ts_by_key("percentage_social_index",
-                                                                                            agent, other_agent,
-                                                                                            tva_object_copy,
-                                                                                            all_other_agents))
+            counter_voting_options["H_si"].append(self.counter_ts_by_key("H_si",
+                                                                         agent, other_agent,
+                                                                         tva_object_copy,
+                                                                         all_other_agents))
 
         return counter_voting_options
 
@@ -194,7 +194,7 @@ class VotingScheme(ABC):
         2 - Boolean, True if preference list is the agent's original preferences, False if they are tactical
         """
 
-        agent_best_pref = {"percentage_my_preference": {}, "percentage_social_index": {}}
+        agent_best_pref = {"H_p": {}, "H_si": {}}
         social_outcome = {}
 
         # Get tactical options for each agent
@@ -262,7 +262,8 @@ class VotingScheme(ABC):
             for agent in all_agents:
                 agent.preferences = agents_original_prefs[agent]
 
-            agent_list = [[agent, agent_best_pref[happiness_type][agent], agent_best_pref[happiness_type][agent] == list(agent.get_preferences().keys())]
+            agent_list = [[agent, agent_best_pref[happiness_type][agent],
+                           agent_best_pref[happiness_type][agent] == list(agent.get_preferences().keys())]
                           for agent in agent_best_pref[happiness_type]]
 
             agent_list.insert(0, latest_winner)
@@ -307,7 +308,7 @@ class Borda(VotingScheme):
     def tactical_options(self, agent, tva_object):
         borda_strat = strategies_borda.Strategies_borda("Borda", 20)
         [res_pref, res_si] = borda_strat.check_if_best(agent, tva_object.results)
-        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
+        tactical_set = {"H_p": {}, "H_si": {}}
 
         original_agents = []
         # remake agent set without our agent
@@ -325,13 +326,13 @@ class Borda(VotingScheme):
                 original_agents.append(alt_agent)
                 new_results = self.run_scheme(tva_object.candidates, original_agents)
                 new_happiness = agent.get_happiness(new_results)
-                #print("new hapiness: ",new_happiness," old hapiness: ",old_happiness, " diff: ")
+                # print("new hapiness: ",new_happiness," old hapiness: ",old_happiness, " diff: ")
 
                 new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                        new_happiness, new_results)
-                tactical_set["percentage_my_preference"][i] = [list(x.keys()), res_pref_winner,
-                                                               new_results, new_happiness,
-                                                               new_overall_happiness]
+                tactical_set["H_p"][i] = [list(x.keys()), res_pref_winner,
+                                          new_results, new_happiness,
+                                          new_overall_happiness]
                 i += 1
                 original_agents.pop()
 
@@ -346,9 +347,9 @@ class Borda(VotingScheme):
 
                 new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                        new_happiness, new_results)
-                tactical_set["percentage_social_index"][j] = [list(y.keys()), new_winner,
-                                                               new_results, new_happiness,
-                                                               new_overall_happiness]
+                tactical_set["H_si"][j] = [list(y.keys()), new_winner,
+                                           new_results, new_happiness,
+                                           new_overall_happiness]
                 j += 1
                 original_agents.pop()
         return tactical_set
@@ -375,7 +376,7 @@ class Plurality(VotingScheme):
 
     def tactical_options(self, agent, tva_object):
 
-        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
+        tactical_set = {"H_p": {}, "H_si": {}}
 
         """
         For percentage_my_preference
@@ -413,9 +414,9 @@ class Plurality(VotingScheme):
                     new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                            agent_happiness, results_copy)
 
-                    tactical_set["percentage_my_preference"][i] = [new_pref_list, new_winner,
-                                                                   results_copy, agent_happiness,
-                                                                   new_overall_happiness]
+                    tactical_set["H_p"][i] = [new_pref_list, new_winner,
+                                              results_copy, agent_happiness,
+                                              new_overall_happiness]
 
         """
         For percentage_social_index
@@ -445,7 +446,7 @@ class AntiPlurality(VotingScheme):
 
     def tactical_options(self, agent, tva_object):
 
-        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
+        tactical_set = {"H_p": {}, "H_si": {}}
 
         """
         For percentage_my_preference
@@ -472,13 +473,13 @@ class AntiPlurality(VotingScheme):
 
             agent_happiness = agent.get_happiness(results_copy)
 
-            if agent_happiness["percentage_my_preference"] > agent.get_happiness(tva_object.results)["percentage_my_preference"]:
+            if agent_happiness["H_p"] > agent.get_happiness(tva_object.results)["H_p"]:
                 new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                        agent_happiness, results_copy)
 
-                tactical_set["percentage_my_preference"][0] = [new_pref_list, new_winner,
-                                                               results_copy, agent_happiness,
-                                                               new_overall_happiness]
+                tactical_set["H_p"][0] = [new_pref_list, new_winner,
+                                          results_copy, agent_happiness,
+                                          new_overall_happiness]
 
         """
         For percentage_social_index
@@ -495,11 +496,11 @@ class AntiPlurality(VotingScheme):
 
         if results_copy[least_preferred] > results_copy[pref_list[0]]:
 
-            tactical_set["percentage_social_index"] = {}
+            tactical_set["H_si"] = {}
 
         elif results_copy[least_preferred] == results_copy[pref_list[0]] and least_preferred < pref_list[0]:
 
-            tactical_set["percentage_social_index"] = {}
+            tactical_set["H_si"] = {}
 
         else:
 
@@ -517,10 +518,6 @@ class AntiPlurality(VotingScheme):
 
                 list_copy[pref_list.index(temp_i)] = temp_last
                 list_copy[-1] = temp_i
-
-                '''
-                ### TO DO: can we remove deepcopy from here? because deepcopy is super slow
-                '''
                 agent_copy = copy(agent)
 
                 new_prefs = {}
@@ -541,13 +538,14 @@ class AntiPlurality(VotingScheme):
 
                 new_happiness = agent.get_happiness(new_results)
 
-                if new_happiness["percentage_social_index"] <= original_happiness["percentage_social_index"]:
+                if new_happiness["H_si"] <= original_happiness["H_si"]:
                     continue
 
                 new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
-                                                                       new_happiness,new_results)
-                tactical_set["percentage_social_index"][i] = [list_copy, new_winner, new_results,
-                                                              new_happiness, new_overall_happiness]
+                                                                       new_happiness, new_results)
+
+                tactical_set["H_si"][i] = [list_copy, new_winner, new_results,
+                                           new_happiness, new_overall_happiness]
 
         return tactical_set
 
@@ -570,7 +568,7 @@ class VotingForTwo(VotingScheme):
 
     def tactical_options(self, agent, tva_object):
 
-        tactical_set = {"percentage_my_preference": {}, "percentage_social_index": {}}
+        tactical_set = {"H_p": {}, "H_si": {}}
 
         """
         For percentage_my_preference
@@ -604,9 +602,9 @@ class VotingForTwo(VotingScheme):
                         new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                                agent_happiness, results_copy)
 
-                        tactical_set["percentage_my_preference"][i - 2] = [new_pref_list, new_winner,
-                                                                           results_copy, agent_happiness,
-                                                                           new_overall_happiness]
+                        tactical_set["H_p"][i - 2] = [new_pref_list, new_winner,
+                                                      results_copy, agent_happiness,
+                                                      new_overall_happiness]
 
             else:
 
@@ -628,9 +626,9 @@ class VotingForTwo(VotingScheme):
                         new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
                                                                                agent_happiness, results_copy)
 
-                        tactical_set["percentage_my_preference"][i - 2] = [new_pref_list, new_winner,
-                                                                           results_copy, agent_happiness,
-                                                                           new_overall_happiness]
+                        tactical_set["H_p"][i - 2] = [new_pref_list, new_winner,
+                                                      results_copy, agent_happiness,
+                                                      new_overall_happiness]
 
         """
         For percentage_social_index
@@ -687,13 +685,13 @@ class VotingForTwo(VotingScheme):
 
                     new_happiness = agent.get_happiness(new_results)
 
-                    if new_happiness["percentage_social_index"] <= original_happiness["percentage_social_index"]:
+                    if new_happiness["H_si"] <= original_happiness["H_si"]:
                         continue
 
                     new_overall_happiness = get_tactical_overall_happiness(tva_object, agent, new_happiness,
                                                                            new_results)
 
-                    tactical_set["percentage_social_index"][i - 2] = [pref_list_copy, new_winner, new_results,
-                                                                      new_happiness, new_overall_happiness]
+                    tactical_set["H_si"][i - 2] = [pref_list_copy, new_winner, new_results,
+                                                   new_happiness, new_overall_happiness]
 
         return tactical_set
