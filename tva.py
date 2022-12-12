@@ -440,7 +440,6 @@ if __name__ == "__main__":
     print(election.get_report())
     print("\n")
 
-"""
     tests = 100
     total_basic_overall_happiness = {"percentage_my_preference": 0, "percentage_social_index": 0}
     total_risk_percentage_my_preference = 0
@@ -452,9 +451,9 @@ if __name__ == "__main__":
     counter_voting_dict_increases = {"percentage_my_preference": 0, "percentage_social_index": 0}
     j, k = 0, 0
 
-    n_voters = 6
-    n_candidates = 9
-    voting_scheme = "AntiPlurality"
+    n_voters = 50
+    n_candidates = 11
+    voting_scheme = "Plurality"
 
     for i in range(tests):
 
@@ -492,6 +491,8 @@ if __name__ == "__main__":
             if elect_7 is not None:
                 counter_voting_dict_increases[key] += elect_7
 
+        print("finished loop")
+
     basic_average_overall_happiness = {}
     for key in total_basic_overall_happiness:
         basic_average_overall_happiness[key] = total_basic_overall_happiness[key]/tests
@@ -517,21 +518,19 @@ if __name__ == "__main__":
 
     counter_average_voting_dict_overall = {}
     for key in counter_voting_dict_overall:
-        if key == "percentage_my_preference":
+        if key == "percentage_my_preference" and j != 0:
             counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / j
-        else:
+        elif k != 0:
             counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / k
     print(counter_average_voting_dict_overall)
 
     counter_average_voting_dict_increases = {}
     for key in counter_voting_dict_increases:
-        if key == "percentage_my_preference":
+        if key == "percentage_my_preference" and j != 0:
             counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / j
-        else:
+        elif k != 0:
             counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / k
     print(counter_average_voting_dict_increases)
 
     print(j, k)
-
-"""
 
