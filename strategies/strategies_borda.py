@@ -19,7 +19,7 @@ class Strategies_borda:
         if not valid:
             print("Error: unsupported voting and happiness scheme combination.")
 
-    def check_if_best(self, agent, remainder_votes, pref_pos):
+    def check_if_best(self, agent, remainder_votes, pref_pos, winner):
         """
         Checks if an agent can change voting strategy to find a better outcome
 
@@ -28,9 +28,7 @@ class Strategies_borda:
         :param pref_pos: position from all tallied votes of highest preferred candidate of agent
         :return [res_pref, res_si]: list containing the new preference dictionaries for both happiness metrics
         """
-        winner = max(remainder_votes, key=remainder_votes.get)
 
-        # Clear votes
         new_votes = remainder_votes.copy()
         prefs = agent.get_preferences()
         res_si = self.highest_position(next(iter(prefs)), prefs, new_votes, pref_pos)
@@ -131,7 +129,6 @@ class Strategies_borda:
         if not (len(sorted_lee) - max_losers) < pref_pos:
             return []
         database = self.populate_recur([], sorted_lee, max_losers-1, [], False)
-
         new_prefs = []
         if len(database) == 1 and len(database[0]) == 1:
             database = [database]
@@ -141,7 +138,6 @@ class Strategies_borda:
             for y in x:
                 i -= 1
                 new_prefs[-1].update({y[0]: i})
-
         return new_prefs
 
     def populate_recur(self, current, sorted_leeway, threshold, database, tight):

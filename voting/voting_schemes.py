@@ -311,6 +311,7 @@ class Borda(VotingScheme):
         original_agents = []
         # remake agent set without our agent
         old_happiness = agent.get_happiness(tva_object.results)
+        old_winner = get_winner(tva_object.results)
 
         for other_agent in tva_object.agents:
             if other_agent.name != agent.name:
@@ -318,7 +319,7 @@ class Borda(VotingScheme):
         new_results = self.run_scheme(tva_object.candidates, original_agents)
 
         borda_strat = strategies_borda.Strategies_borda("Borda", 20)
-        [res_pref, res_si] = borda_strat.check_if_best(agent, new_results, index)
+        [res_pref, res_si] = borda_strat.check_if_best(agent, new_results, index, old_winner)
         tactical_set = {"H_p": {}, "H_si": {}}
 
         if len(res_pref) > 0:
@@ -329,12 +330,12 @@ class Borda(VotingScheme):
                 original_agents.append(alt_agent)
                 new_results = self.run_scheme(tva_object.candidates, original_agents)
                 new_happiness = agent.get_happiness(new_results)
-                if new_happiness["H_p"] > old_happiness["H_p"]:
-                    new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
-                                                                           new_happiness, new_results)
-                    tactical_set["H_p"][i] = [list(x.keys()), res_pref_winner,
-                                              new_results, new_happiness,
-                                              new_overall_happiness]
+
+                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                       new_happiness, new_results)
+                tactical_set["H_p"][i] = [list(x.keys()), res_pref_winner,
+                                          new_results, new_happiness,
+                                          new_overall_happiness]
                 i += 1
                 original_agents.pop()
 
@@ -346,12 +347,12 @@ class Borda(VotingScheme):
                 new_results = self.run_scheme(tva_object.candidates, original_agents)
                 new_happiness = agent.get_happiness(new_results)
                 new_winner = get_winner(new_results)
-                if new_happiness["H_si"] > old_happiness["H_si"]:
-                    new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
-                                                                           new_happiness, new_results)
-                    tactical_set["H_si"][j] = [list(y.keys()), new_winner,
-                                               new_results, new_happiness,
-                                               new_overall_happiness]
+
+                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                       new_happiness, new_results)
+                tactical_set["H_si"][j] = [list(y.keys()), new_winner,
+                                           new_results, new_happiness,
+                                           new_overall_happiness]
                 j += 1
                 original_agents.pop()
         return tactical_set
