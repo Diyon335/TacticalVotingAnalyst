@@ -304,6 +304,10 @@ class Borda(VotingScheme):
     """
 
     def tactical_options(self, agent, tva_object):
+        results = tva_object.results
+        result_list = sorted(results, key=lambda k: results[k], reverse=True)
+        index = result_list.index(list(agent.preferences.keys())[0])
+
         original_agents = []
         # remake agent set without our agent
         old_happiness = agent.get_happiness(tva_object.results)
@@ -314,7 +318,7 @@ class Borda(VotingScheme):
         new_results = self.run_scheme(tva_object.candidates, original_agents)
 
         borda_strat = strategies_borda.Strategies_borda("Borda", 20)
-        [res_pref, res_si] = borda_strat.check_if_best(agent, new_results)
+        [res_pref, res_si] = borda_strat.check_if_best(agent, new_results, index)
         tactical_set = {"H_p": {}, "H_si": {}}
 
         if len(res_pref) > 0:

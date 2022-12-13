@@ -19,12 +19,13 @@ class Strategies_borda:
         if not valid:
             print("Error: unsupported voting and happiness scheme combination.")
 
-    def check_if_best(self, agent, remainder_votes):
+    def check_if_best(self, agent, remainder_votes, pref_pos):
         """
         Checks if an agent can change voting strategy to find a better outcome
 
         :param agent: the agent changing their voting strategy
         :param remainder_votes: tallied votes of all other agents except ours
+        :param pref_pos: position from all tallied votes of highest preferred candidate of agent
         :return [res_pref, res_si]: list containing the new preference dictionaries for both happiness metrics
         """
         winner = max(remainder_votes, key=remainder_votes.get)
@@ -32,7 +33,7 @@ class Strategies_borda:
         # Clear votes
         new_votes = remainder_votes.copy()
         prefs = agent.get_preferences()
-        res_si = self.highest_position(next(iter(prefs)), prefs, new_votes)
+        res_si = self.highest_position(next(iter(prefs)), prefs, new_votes, pref_pos)
         for x in prefs:
             if x == winner:
                 return [[], res_si]
@@ -94,7 +95,7 @@ class Strategies_borda:
 
         return new_prefs
 
-    def highest_position(self, candidate, prefs, votes):
+    def highest_position(self, candidate, prefs, votes, pref_pos):
         """
         Finds the highest position the candidate can be made to achieve with tactical voting,
         which is proportional to the score of the "social index" happiness metric
@@ -102,6 +103,7 @@ class Strategies_borda:
         :param candidate: the candidate to get to 1st place
         :param prefs: preference dict of the agent changing their voting strategy
         :param votes: tallied votes without our agents votes
+        :param pref_pos: position of highest preference in voting
         :return new_prefs: list of new preferences for tactical voting
         """
         new_prefs = {}
@@ -126,7 +128,7 @@ class Strategies_borda:
 
         while max_losers < len(sorted_lee) and sorted_lee[-1-max_losers][1] > max_losers:
             max_losers += 1
-        if max_losers == 0:
+        if not (len(sorted_lee) - max_losers) < pref_pos:
             return []
         database = self.populate_recur([], sorted_lee, max_losers-1, [], False)
 
