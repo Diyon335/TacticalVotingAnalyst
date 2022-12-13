@@ -342,6 +342,9 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
     else:
         basic_tva_happiness_increases["H_si"] = 0
 
+    risk_preference_happiness_count = risk_preference_happiness_count / n_voters
+    risk_social_index_count = risk_social_index_count / n_voters
+
     if is_advanced:
 
         '''
@@ -361,7 +364,7 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
             for agent in [tactical_agent for tactical_agent in concurrent_voting_outcome[key][2:]]:
                 old_happiness = agent[0].get_happiness(election.results)[key]
                 new_happiness = agent[0].get_happiness(election_copy.results)[key]
-                conc_voting_happiness_increases[key][0] = new_happiness - old_happiness
+                conc_voting_happiness_increases[key][0] += new_happiness - old_happiness
                 conc_voting_happiness_increases[key][1] += 1
 
         for key in conc_voting_happiness_increases:
@@ -427,19 +430,20 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
 
 if __name__ == "__main__":
 
-    show_atva_features = True
-    #
-    # candidates = "ABCDE"
-    # voting_scheme = "Borda"
-    # voters = 5
-    #
-    # election = TVA(candidates, voting_scheme, voters, show_atva_features)
-    # election.run()
-    #
-    # print(election.get_report())
-    # print("\n")
+    '''show_atva_features = True
 
-    tests = 10
+    candidates = "ABCDEFG"
+    voting_scheme = "Borda"
+    voters = 8
+
+    election = TVA(candidates, voting_scheme, voters, show_atva_features)
+    election.run()
+
+    print(election.get_report())
+    print("\n")'''
+
+    show_atva_features = True
+    tests = 100
     total_basic_overall_happiness = {"H_p": 0, "H_si": 0}
     total_risk_percentage_my_preference = 0
     total_risk_percentage_social_outcome = 0
@@ -450,8 +454,8 @@ if __name__ == "__main__":
     counter_voting_dict_increases = {"H_p": 0, "H_si": 0}
     j, k = 0, 0
 
-    n_voters = 50
-    n_candidates = 11
+    n_voters = 6
+    n_candidates = 8
     voting_scheme = "Plurality"
 
     for i in range(tests):
