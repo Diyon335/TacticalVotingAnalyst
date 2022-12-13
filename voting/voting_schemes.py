@@ -313,7 +313,7 @@ class Borda(VotingScheme):
         old_happiness = agent.get_happiness(tva_object.results)
 
         for other_agent in tva_object.agents:
-            if other_agent != agent:
+            if other_agent.name != agent.name:
                 original_agents.append(other_agent)
         new_results = self.run_scheme(tva_object.candidates, original_agents)
 
