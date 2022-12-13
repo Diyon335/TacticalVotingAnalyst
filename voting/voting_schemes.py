@@ -340,7 +340,7 @@ class Borda(VotingScheme):
 
         if len(res_si) > 0:
             j = 0
-            for y in res_pref:
+            for y in res_si:
                 alt_agent = Agent(agent.name, ''.join(y), tva_object.scheme)
                 original_agents.append(alt_agent)
                 new_results = self.run_scheme(tva_object.candidates, original_agents)
