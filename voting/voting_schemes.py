@@ -329,12 +329,12 @@ class Borda(VotingScheme):
                 original_agents.append(alt_agent)
                 new_results = self.run_scheme(tva_object.candidates, original_agents)
                 new_happiness = agent.get_happiness(new_results)
-
-                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
-                                                                       new_happiness, new_results)
-                tactical_set["H_p"][i] = [list(x.keys()), res_pref_winner,
-                                          new_results, new_happiness,
-                                          new_overall_happiness]
+                if new_happiness["H_p"] > old_happiness["H_p"]:
+                    new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                           new_happiness, new_results)
+                    tactical_set["H_p"][i] = [list(x.keys()), res_pref_winner,
+                                              new_results, new_happiness,
+                                              new_overall_happiness]
                 i += 1
                 original_agents.pop()
 
@@ -346,12 +346,12 @@ class Borda(VotingScheme):
                 new_results = self.run_scheme(tva_object.candidates, original_agents)
                 new_happiness = agent.get_happiness(new_results)
                 new_winner = get_winner(new_results)
-
-                new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
-                                                                       new_happiness, new_results)
-                tactical_set["H_si"][j] = [list(y.keys()), new_winner,
-                                           new_results, new_happiness,
-                                           new_overall_happiness]
+                if new_happiness["H_si"] > old_happiness["H_si"]:
+                    new_overall_happiness = get_tactical_overall_happiness(tva_object, agent,
+                                                                           new_happiness, new_results)
+                    tactical_set["H_si"][j] = [list(y.keys()), new_winner,
+                                               new_results, new_happiness,
+                                               new_overall_happiness]
                 j += 1
                 original_agents.pop()
         return tactical_set
