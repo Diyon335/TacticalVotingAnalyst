@@ -125,15 +125,15 @@ class Strategies_borda:
         sorted_lee = sorted(lee, key=lambda k: k[1], reverse=True)
 
         max_losers = 0
-
-        while max_losers < len(sorted_lee) and sorted_lee[-1-max_losers][1] > max_losers:
-            max_losers += 1
+        for l in range(0, len(sorted_lee)):
+            if sorted_lee[-1-l][1] > max_losers:
+                max_losers += 1
         if not (len(sorted_lee) - max_losers) < pref_pos:
             return []
         database = self.populate_recur([], sorted_lee, max_losers-1, [], False)
 
         new_prefs = []
-        if database is not list:
+        if len(database) == 1 and len(database[0]) == 1:
             database = [database]
         for x in database:
             i = len(prefs) - 1
@@ -164,7 +164,7 @@ class Strategies_borda:
             # put remainder on the start
             if not tight and len(sorted_leeway) > 0:
                 for x in sorted_leeway:
-                    database.insert(0, x)
+                    database[-1].insert(0, x)
             return database
         i = 0
         while i < len(sorted_leeway):
