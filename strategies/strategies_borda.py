@@ -19,23 +19,19 @@ class Strategies_borda:
         if not valid:
             print("Error: unsupported voting and happiness scheme combination.")
 
-    def check_if_best(self, agent, votes):
+    def check_if_best(self, agent, remainder_votes):
         """
         Checks if an agent can change voting strategy to find a better outcome
 
         :param agent: the agent changing their voting strategy
-        :param votes: dict of all candidates and their tallied votes
+        :param remainder_votes: tallied votes of all other agents except ours
         :return [res_pref, res_si]: list containing the new preference dictionaries for both happiness metrics
         """
-        winner = max(votes, key=votes.get)
+        winner = max(remainder_votes, key=remainder_votes.get)
 
         # Clear votes
-        new_votes = votes.copy()
+        new_votes = remainder_votes.copy()
         prefs = agent.get_preferences()
-        le = len(prefs)-1
-        for cand in prefs:
-            le -= 1
-            new_votes[cand] -= le
         res_si = self.highest_position(next(iter(prefs)), prefs, new_votes)
         for x in prefs:
             if x == winner:
