@@ -124,7 +124,7 @@ class Strategies_borda:
 
         max_losers = 0
         for l in range(0, len(sorted_lee)):
-            if sorted_lee[-1-l][1] > max_losers:
+            if sorted_lee[-1-l][1] >= max_losers:
                 max_losers += 1
         if not (len(sorted_lee) - max_losers) < pref_pos:
             return []
