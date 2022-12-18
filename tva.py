@@ -6,6 +6,7 @@ The Tactical Voter Analyst (TVA) for the course: Multi-Agent Systems
 """
 
 import importlib
+import os.path
 import random
 import numpy as np
 from copy import copy
@@ -428,112 +429,180 @@ def create_and_run_election(n_voters, n_candidates, voting_scheme, is_advanced):
            counter_voting_dict_overall, counter_voting_dict_increases
 
 
+def run_tests(data_folder, tests, voting_scheme, show_atva_features):
+
+    print("##########################TESTS########################################")
+
+    n_voters_test = [2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 20, 30, 50]
+    n_candidates_test = [3, 4, 5, 6, 7, 8, 9, 10]
+
+    print(f"Running tests for {voting_scheme}...")
+
+    for curr_n_candidates in n_candidates_test:
+        n_candidates = curr_n_candidates
+        for curr_n_voters in n_voters_test:
+            n_voters = curr_n_voters
+
+            print(f"Running for {n_candidates} candidates with {curr_n_voters} voters")
+
+            j, k = 0, 0
+            total_basic_overall_happiness = {"H_p": 0, "H_si": 0}
+            total_risk_percentage_my_preference = 0
+            total_risk_percentage_social_outcome = 0
+            total_basic_happiness_increase = {"H_p": 0, "H_si": 0}
+            total_conc_overall_happiness = {"H_p": 0, "H_si": 0}
+            total_conc_voting_happiness_increases = {"H_p": 0, "H_si": 0}
+            counter_voting_dict_overall = {"H_p": 0, "H_si": 0}
+            counter_voting_dict_increases = {"H_p": 0, "H_si": 0}
+
+            for i in range(tests):
+
+                election_results = create_and_run_election(n_voters, n_candidates, voting_scheme, show_atva_features)
+
+                for key in election_results[0]:
+                    total_basic_overall_happiness[key] += election_results[0][key]
+
+                total_risk_percentage_my_preference += election_results[1]
+                total_risk_percentage_social_outcome += election_results[2]
+
+                for key in election_results[3]:
+                    elect_3 = election_results[3][key]
+                    total_basic_happiness_increase[key] += elect_3
+
+                for key in election_results[4]:
+                    elect_4 = election_results[4][key]
+                    total_conc_overall_happiness[key] += elect_4
+
+                for key in election_results[5]:
+                    elect_5 = election_results[5][key]
+                    total_conc_voting_happiness_increases[key] += elect_5
+
+                for key in election_results[6]:
+                    elect_6 = election_results[6][key]
+                    if elect_6 is not None:
+                        counter_voting_dict_overall[key] += elect_6
+                        if key == "percentage_my_preference":
+                            j += 1
+                        else:
+                            k += 1
+
+                for key in election_results[7]:
+                    elect_7 = election_results[7][key]
+                    if elect_7 is not None:
+                        counter_voting_dict_increases[key] += elect_7
+
+            if not os.path.exists(data_folder + voting_scheme):
+                os.mkdir(data_folder + voting_scheme)
+
+            with open(data_folder + voting_scheme + "/results_" + voting_scheme + "_n_candidates_" + str(
+                            n_candidates) + "_n_voters_" + str(n_voters) + ".txt", "w") as out_file:
+
+                out_file.write("Voting Scheme: " + voting_scheme)
+                out_file.write("\n")
+
+                basic_average_overall_happiness = {}
+                for key in total_basic_overall_happiness:
+                    basic_average_overall_happiness[key] = total_basic_overall_happiness[key] / tests
+
+                out_file.write("basic_average_overall_happiness")
+                out_file.write("\n")
+                out_file.write(str(basic_average_overall_happiness))
+                out_file.write("\n")
+
+                out_file.write("Average tactical voting risk for percentage_my_preference: ")
+                out_file.write("\n")
+                out_file.write(str(total_risk_percentage_my_preference / tests))
+                out_file.write("\n")
+                out_file.write("Average tactical voting risk for percentage_social_index: ")
+                out_file.write("\n")
+                out_file.write(str(total_risk_percentage_social_outcome / tests))
+                out_file.write("\n")
+
+                basic_average_happiness_increase = {}
+                for key in total_basic_happiness_increase:
+                    basic_average_happiness_increase[key] = total_basic_happiness_increase[key] / tests
+
+                out_file.write("basic_average_happiness_increase")
+                out_file.write("\n")
+                out_file.write(str(basic_average_happiness_increase))
+                out_file.write("\n")
+
+                conc_average_overall_happiness = {}
+                for key in total_conc_overall_happiness:
+                    conc_average_overall_happiness[key] = total_conc_overall_happiness[key] / tests
+
+                out_file.write("conc_average_overall_happiness")
+                out_file.write("\n")
+                out_file.write(str(conc_average_overall_happiness))
+                out_file.write("\n")
+
+                conc_average_voting_happiness_increases = {}
+                for key in total_conc_voting_happiness_increases:
+                    conc_average_voting_happiness_increases[key] = total_conc_voting_happiness_increases[key] / tests
+
+                out_file.write("conc_average_voting_happiness_increases")
+                out_file.write("\n")
+                out_file.write(str(conc_average_voting_happiness_increases))
+                out_file.write("\n")
+
+                counter_average_voting_dict_overall = {}
+                for key in counter_voting_dict_overall:
+                    if key == "percentage_my_preference" and j != 0:
+                        counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / j
+                    elif k != 0:
+                        counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / k
+
+                out_file.write("counter_average_voting_dict_overall")
+                out_file.write("\n")
+                out_file.write(str(counter_average_voting_dict_overall))
+                out_file.write("\n")
+
+                counter_average_voting_dict_increases = {}
+                for key in counter_voting_dict_increases:
+                    if key == "percentage_my_preference" and j != 0:
+                        counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / j
+                    elif k != 0:
+                        counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / k
+
+                out_file.write("counter_average_voting_dict_increases")
+                out_file.write("\n")
+                out_file.write(str(counter_average_voting_dict_increases))
+                out_file.write("\n")
+
+                out_file.write(str(j) + ", " + str(k))
+
+    print(f"Tests were run for {voting_scheme}, and saved in {data_folder+voting_scheme}")
+
+
 if __name__ == "__main__":
 
-    '''show_atva_features = True
+    # Change parameters as desired
+    data_folder = "C:/Users/31618/Desktop/VUB/Scripting Languages/Projects/TacticalVotingAnalyst/"
 
-    candidates = "ABCDEFG"
+    run_multiple_tests = True
+
+    show_atva_features = True
+
+    # Candidates are assumed to be letters of the alphabet
+    candidates = "ABCDEFGIJK"
+
+    # Voting schemes must be written out with the first letter capitalised; Plurality, AntiPlurality, VotingForTwo, Borda
     voting_scheme = "Borda"
-    voters = 8
+    voters = 3
 
+    # Runs election and prints out report
     election = TVA(candidates, voting_scheme, voters, show_atva_features)
     election.run()
 
     print(election.get_report())
-    print("\n")'''
+    print("\n")
 
-    show_atva_features = True
-    tests = 100
-    total_basic_overall_happiness = {"H_p": 0, "H_si": 0}
-    total_risk_percentage_my_preference = 0
-    total_risk_percentage_social_outcome = 0
-    total_basic_happiness_increase = {"H_p": 0, "H_si": 0}
-    total_conc_overall_happiness = {"H_p": 0, "H_si": 0}
-    total_conc_voting_happiness_increases = {"H_p": 0, "H_si": 0}
-    counter_voting_dict_overall = {"H_p": 0, "H_si": 0}
-    counter_voting_dict_increases = {"H_p": 0, "H_si": 0}
-    j, k = 0, 0
+    # Here multiple elections can be run to see average results over multiple elections
+    if run_multiple_tests:
 
-    n_voters = 6
-    n_candidates = 8
-    voting_scheme = "Plurality"
+        tests = 2
 
-    for i in range(tests):
+        run_tests(data_folder, tests, voting_scheme, show_atva_features)
 
-        election_results = create_and_run_election(n_voters, n_candidates, voting_scheme, show_atva_features)
-
-        for key in election_results[0]:
-            total_basic_overall_happiness[key] += election_results[0][key]
-
-        total_risk_percentage_my_preference += election_results[1]
-        total_risk_percentage_social_outcome += election_results[2]
-
-        for key in election_results[3]:
-            elect_3 = election_results[3][key]
-            total_basic_happiness_increase[key] += elect_3
-
-        for key in election_results[4]:
-            elect_4 = election_results[4][key]
-            total_conc_overall_happiness[key] += elect_4
-
-        for key in election_results[5]:
-            elect_5 = election_results[5][key]
-            total_conc_voting_happiness_increases[key] += elect_5
-
-        for key in election_results[6]:
-            elect_6 = election_results[6][key]
-            if elect_6 is not None:
-                counter_voting_dict_overall[key] += elect_6
-                if key == "H_p":
-                    j += 1
-                else:
-                    k += 1
-
-        for key in election_results[7]:
-            elect_7 = election_results[7][key]
-            if elect_7 is not None:
-                counter_voting_dict_increases[key] += elect_7
-
-        print("finished loop")
-
-    basic_average_overall_happiness = {}
-    for key in total_basic_overall_happiness:
-        basic_average_overall_happiness[key] = total_basic_overall_happiness[key]/tests
-    print(basic_average_overall_happiness)
-
-    print("Average tactical voting risk for H_p: ", str((total_risk_percentage_my_preference/tests)*1))
-    print("Average tactical voting risk for H_si: ", str((total_risk_percentage_social_outcome/tests)*1))
-
-    basic_average_happiness_increase = {}
-    for key in total_basic_happiness_increase:
-        basic_average_happiness_increase[key] = total_basic_happiness_increase[key]/tests
-    print(basic_average_happiness_increase)
-
-    conc_average_overall_happiness = {}
-    for key in total_conc_overall_happiness:
-        conc_average_overall_happiness[key] = total_conc_overall_happiness[key]/tests
-    print(conc_average_overall_happiness)
-
-    conc_average_voting_happiness_increases = {}
-    for key in total_conc_voting_happiness_increases:
-        conc_average_voting_happiness_increases[key] = total_conc_voting_happiness_increases[key] / tests
-    print(conc_average_voting_happiness_increases)
-
-    counter_average_voting_dict_overall = {}
-    for key in counter_voting_dict_overall:
-        if key == "H_p" and j != 0:
-            counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / j
-        elif k != 0:
-            counter_average_voting_dict_overall[key] = counter_voting_dict_overall[key] / k
-    print(counter_average_voting_dict_overall)
-
-    counter_average_voting_dict_increases = {}
-    for key in counter_voting_dict_increases:
-        if key == "H_p" and j != 0:
-            counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / j
-        elif k != 0:
-            counter_average_voting_dict_increases[key] = counter_voting_dict_increases[key] / k
-    print(counter_average_voting_dict_increases)
-
-    print(j, k)
-
+    # In order to visualise results, please run mas_visualization.ipynb in a Jupyter environment
+    # The notebook requires tests to be run for all voting schemes
