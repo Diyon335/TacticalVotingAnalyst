@@ -579,7 +579,7 @@ if __name__ == "__main__":
     # Change parameters as desired
     data_folder = "C:/Users/31618/Desktop/VUB/Scripting Languages/Projects/TacticalVotingAnalyst/"
 
-    run_multiple_tests = True
+    run_multiple_tests = False
 
     show_atva_features = True
 
